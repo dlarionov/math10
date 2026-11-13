@@ -14,6 +14,7 @@ REQUIRED = (
     'specs/README.md', 'specs/TEMPLATE.md', 'specs/000-project-foundation.md',
     'specs/001-sinus-cosinus.md', 'specs/002-tangens-cotangens.md',
     'specs/003-newton-binomial.md', 'specs/004-function-transformations.md',
+    'specs/005-public-privacy.md', 'scripts/check_privacy.py',
 )
 
 
