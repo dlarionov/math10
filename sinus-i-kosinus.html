@@ -1,0 +1,964 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Синус и косинус</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=Caveat:wght@600&family=Golos+Text:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: школьная тетрадь в клетку с красными полями справа (заметки родителю). В тёмной теме — школьная доска и цветной мел. */
+:root{
+  --bg:#f6f9fd; --grid:#e1eaf5; --surface:#ffffff; --soft:#eef1fa; --fg:#1a2444; --muted:#55607c; --line:#c3cfe0;
+  --sin:#c2264b; --cos:#135fbc; --accent:#4b36a6; --on-accent:#ffffff; --mirror:#0b7a73;
+  --ok:#17784a; --bad:#b3261e; --pen:#ad2a22; --margin:#e4939c;
+  --display:"Bitter",Georgia,serif; --body:"Golos Text","Segoe UI",system-ui,sans-serif;
+  --math:"STIX Two Text","Cambria Math",Cambria,Georgia,serif; --hand:"Caveat","Segoe Print",cursive;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17261f; --grid:#1f3129; --surface:#1e3229; --soft:#263d33; --fg:#eff3e8; --muted:#adbcae; --line:#3e5549;
+  --sin:#ff9db0; --cos:#90cbff; --accent:#ffd977; --on-accent:#1b2a22; --mirror:#7fe3d6;
+  --ok:#8fe2ab; --bad:#ffb4a6; --pen:#ffb4a6; --margin:#80595d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17261f; --grid:#1f3129; --surface:#1e3229; --soft:#263d33; --fg:#eff3e8; --muted:#adbcae; --line:#3e5549;
+  --sin:#ff9db0; --cos:#90cbff; --accent:#ffd977; --on-accent:#1b2a22; --mirror:#7fe3d6;
+  --ok:#8fe2ab; --bad:#ffb4a6; --pen:#ffb4a6; --margin:#80595d; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;color:var(--fg);font:400 17px/1.6 var(--body);background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1100px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);line-height:1.2;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.4rem,7vw,4rem);font-weight:700}
+h2{font-size:clamp(1.55rem,3.6vw,2.1rem);font-weight:700}
+h3{font-size:1.2rem;font-weight:600;margin-top:1.6rem}
+p{margin:0}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* Математика */
+.m,.s,.c,.key,td.mt{font-family:var(--math)}
+.s{color:var(--sin);font-weight:600;white-space:nowrap}
+.c{color:var(--cos);font-weight:600;white-space:nowrap}
+.f{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.86em;line-height:1.18;margin-inline:.1em}
+.f b{font-weight:inherit;padding-inline:.25em}
+.f b:first-child{border-bottom:1px solid currentColor}
+.ov{border-top:1px solid currentColor;padding-inline:.1em}
+
+/* Шапка */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px 40px;align-items:center;padding-block:40px 28px}
+.hero .lead{font-size:1.2rem;max-width:40em;margin-top:14px}
+.hero .legend{color:var(--muted);margin-top:12px}
+.hero svg{width:210px;height:auto;display:block;background:var(--surface);border:1px solid var(--line)}
+@media (max-width:640px){.hero{grid-template-columns:minmax(0,1fr)}.hero svg{width:180px}}
+
+/* Навигация */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-block:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:12px;padding-block:6px}
+.steps{display:flex;gap:2px;overflow-x:auto;flex:1 1 auto;min-width:0;scrollbar-width:thin}
+.steps a{flex:none;padding:4px 10px;color:var(--fg);text-decoration:none;font-size:.88rem;border-radius:3px;white-space:nowrap}
+.steps a:hover{background:var(--soft)}
+.steps a.isdone{color:var(--ok)}
+.steps a.isdone::after{content:" ✓"}
+.notes-toggle{flex:none;font-size:.82rem;color:var(--muted);display:flex;gap:6px;align-items:center;white-space:nowrap}
+@media (max-width:560px){.notes-toggle span{display:none}.notes-toggle::after{content:"заметки"}}
+
+/* Шаги: основной столбец + поля */
+.step{display:grid;grid-template-columns:minmax(0,1fr) 240px;column-gap:28px;padding-block:44px;border-bottom:1px solid var(--line);scroll-margin-top:52px}
+.step>header{grid-column:1}
+.step>.note{grid-column:2;grid-row:1 / span 2;border-left:2px solid var(--margin);padding-left:16px;font-size:.88rem;line-height:1.5;color:var(--muted);display:grid;gap:10px;align-content:start}
+.step>.main{grid-column:1;min-width:0;display:grid;gap:16px;margin-top:16px}
+.main>*{min-width:0}
+.main>p,.main>ul,.main>ol{max-width:68ch;margin:0}
+.eyebrow{font-size:.82rem;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.note .who{font:600 1.35rem/1 var(--hand);color:var(--pen)}
+.note p b{color:var(--fg);font-weight:600}
+body.no-notes .note{display:none}
+body.no-notes .step{grid-template-columns:minmax(0,1fr)}
+@media (max-width:900px){
+  .step{grid-template-columns:minmax(0,1fr)}
+  .step>.note{grid-column:1;grid-row:auto;border-left:0;border-block:1px dashed var(--margin);padding:10px 0;margin-top:14px}
+}
+
+.key{background:var(--soft);padding:12px 16px;font-size:1.14rem;display:flex;flex-wrap:wrap;gap:8px 36px;align-items:center}
+.key .big{font-size:1.25rem}
+ul.plain,ol.plain{padding-left:1.3em;display:grid;gap:6px}
+
+/* Рисунки */
+.fig{background:var(--surface);border:1px solid var(--line);padding:14px;display:grid;gap:12px}
+.fig figcaption,.figcap{font-size:.88rem;color:var(--muted)}
+figure{margin:0}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.draw{flex:1 1 300px;min-width:0;max-width:420px}
+.draw svg,.graph svg{display:block;width:100%;height:auto;max-width:100%}
+.graph{max-width:640px}
+.read{flex:1 1 240px;min-width:0;display:grid;gap:6px;font-family:var(--math);font-size:1.08rem;font-variant-numeric:tabular-nums}
+.read .ln{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;min-height:2.1em}
+.read .tag{font-family:var(--body);font-size:.8rem;color:var(--muted)}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+.ctrls label{display:flex;align-items:center;gap:8px;font-size:.92rem}
+.ctrls label.sl{flex:1 1 220px;min-width:0}
+.ctrls input[type=range]{flex:1;min-width:80px;accent-color:var(--accent)}
+input[type=checkbox]{accent-color:var(--accent)}
+.lb{font:600 15px var(--math)}
+.tfg{fill:var(--fg)}.tmut{fill:var(--muted)}.tsin{fill:var(--sin)}.tcos{fill:var(--cos)}.tacc{fill:var(--accent)}.tmir{fill:var(--mirror)}
+.small{font:400 12px var(--body)}
+.tick{cursor:pointer}
+.handle{fill:transparent;pointer-events:all;cursor:grab;touch-action:none}
+.handle:active{cursor:grabbing}
+
+/* Таблицы */
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;background:var(--surface);font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:center}
+th{font-weight:600;background:var(--soft)}
+td.lf,th.lf{text-align:left}
+.vals td,.vals th{min-width:52px;font-family:var(--math);font-size:1.05rem}
+
+/* Задачи */
+.tasks{display:grid;gap:12px}
+.tasks-h{font-family:var(--display);font-weight:600;font-size:1.15rem;margin-top:8px}
+.task{background:var(--surface);border:1px solid var(--line);padding:12px 14px;display:grid;gap:8px}
+.task .q{max-width:66ch}
+.ans{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ans input{font:400 1.05rem var(--math);width:9.5em;max-width:100%;padding:6px 8px;background:var(--bg);color:var(--fg);border:1px solid var(--muted);border-radius:3px}
+.btn{font:500 .92rem var(--body);padding:7px 12px;background:var(--accent);color:var(--on-accent);border:1px solid var(--accent);border-radius:3px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--line)}
+.btn.ghost:hover{background:var(--soft)}
+.fb{min-height:1.5em;font-size:.95rem;font-weight:500}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--bad)}
+details{font-size:.95rem}
+details summary{cursor:pointer;color:var(--muted);width:fit-content}
+details>div{padding:6px 0 2px;font-family:var(--body)}
+.dets{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:flex-start}
+.dets details{flex:1 1 100%}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opt.right{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.opt.wrong{border-color:var(--bad);color:var(--bad)}
+.done{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.92rem}
+
+/* Тренажёр */
+.drill{background:var(--surface);border:1px solid var(--line);padding:16px;display:grid;gap:12px}
+.drill .ask{font:600 2rem var(--math)}
+.drill .opts .btn{min-width:62px;min-height:48px;font:400 1.1rem var(--math)}
+.drill .res{display:flex;flex-wrap:wrap;gap:14px;align-items:center;min-height:96px}
+.drill .res svg{width:92px;height:92px;flex:none}
+.drill .res p{flex:1 1 220px;min-width:0}
+
+.sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px}
+.sheet>div{background:var(--surface);border:1px solid var(--line);padding:12px 14px;font-family:var(--math);display:grid;gap:6px;align-content:start}
+.sheet h3{margin:0 0 4px;font-size:1rem}
+.foot{padding-block:28px 48px;color:var(--muted);font-size:.9rem}
+</style>
+
+<div class="wrap">
+  <p style="padding-top:18px"><a href="index.html">← Все уроки</a></p>
+  <div class="hero">
+    <div>
+      <h1>Синус и косинус</h1>
+      <p class="lead">Вся тема держится на одной картинке: точка ходит по окружности, а её координаты и есть косинус и синус. Пройдём от прямоугольного треугольника до теорем синусов и косинусов.</p>
+      <p class="legend">На всех рисунках <span class="c">косинус</span> синий и лежит по горизонтали, <span class="s">синус</span> красный и стоит по вертикали.</p>
+    </div>
+    <svg id="hero-svg" viewBox="0 0 200 200" role="img" aria-label="Точка движется по окружности, её проекции на оси показывают косинус и синус"></svg>
+  </div>
+</div>
+
+<nav class="topbar" aria-label="Шаги урока">
+  <div class="wrap">
+    <div class="steps">
+      <a href="#start">С чего начать</a>
+      <a href="#step-1" data-nav="1">1 Треугольник</a>
+      <a href="#step-2" data-nav="2">2 Таблица</a>
+      <a href="#step-3" data-nav="3">3 Окружность</a>
+      <a href="#step-4" data-nav="4">4 Формулы</a>
+      <a href="#step-5" data-nav="5">5 Радианы, график</a>
+      <a href="#step-6" data-nav="6">6 Т. косинусов</a>
+      <a href="#step-7" data-nav="7">7 Т. синусов</a>
+      <a href="#step-8" data-nav="8">8 Контрольная</a>
+      <a href="#cheat">Шпаргалка</a>
+    </div>
+    <label class="notes-toggle"><input type="checkbox" id="notes-on" checked> <span>заметки родителю</span></label>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<section class="step" id="start">
+  <header>
+    <p class="eyebrow">Перед началом · 5 минут</p>
+    <h2>С чего начать</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p>Текст шагов обращён к учащимся, заметки на этих полях к вам. Галочка «заметки родителю» наверху их скрывает.</p>
+    <p>Если хотите полную картину темы, идите подряд. Если времени мало, начните с первого вопроса, на котором она запнулась.</p>
+  </aside>
+  <div class="main">
+    <p>Задайте эти вопросы устно, без подсказок. Первый вопрос без уверенного ответа показывает, с какого шага начинать.</p>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th class="lf">Вопрос</th><th class="lf">Хороший ответ</th><th>Если нет</th></tr></thead>
+        <tbody>
+          <tr><td class="lf">Что такое sin α в прямоугольном треугольнике?</td><td class="lf">Противолежащий катет делить на гипотенузу</td><td><a href="#step-1">Шаг 1</a></td></tr>
+          <tr><td class="lf">Чему равны sin 30°, cos 30°, sin 45°?</td><td class="lf m"><span class="f"><b>1</b><b>2</b></span>, <span class="f"><b>√3</b><b>2</b></span>, <span class="f"><b>√2</b><b>2</b></span></td><td><a href="#step-2">Шаг 2</a></td></tr>
+          <tr><td class="lf">Чему равен cos 120°? Откуда там минус?</td><td class="lf">−½, точка на окружности левее оси y</td><td><a href="#step-3">Шаг 3</a></td></tr>
+          <tr><td class="lf">Чему равно sin²α + cos²α и почему?</td><td class="lf">1, это теорема Пифагора на окружности</td><td><a href="#step-4">Шаг 4</a></td></tr>
+          <tr><td class="lf">Сколько градусов в π радиан?</td><td class="lf">180°</td><td><a href="#step-5">Шаг 5</a></td></tr>
+          <tr><td class="lf">Две стороны 3 и 8, угол между ними 60°. Найди третью.</td><td class="lf">7, по теореме косинусов</td><td><a href="#step-6">Шаг 6</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>Как разбить на занятия</b> (время примерное): шаги 1–3 за первый раз, 4–5 за второй, 6–8 за третий. Начинайте каждое следующее занятие с пяти минут <a href="#drill">тренажёра</a>.</p>
+    <p><b>Как вести.</b> Рисунками пусть управляет она. Просите сначала сказать, что произойдёт, и только потом двигать точку. Ошибка в предсказании полезнее правильного ответа, подсмотренного на экране.</p>
+  </div>
+</section>
+
+<!-- ШАГ 1 -->
+<section class="step" id="step-1">
+  <header>
+    <p class="eyebrow">Шаг 1 · около 15 минут</p>
+    <h2>Синус — это отношение двух сторон</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>Главная мысль шага:</b> синус зависит только от угла и совсем не зависит от размера треугольника.</p>
+    <p><b>Спросите:</b> «Почему у маленького и большого треугольника с одним углом синус одинаковый?» Ответ: они подобны, все стороны растут в одно и то же число раз.</p>
+    <p><b>Если путает катеты:</b> пусть покажет пальцем от угла. Сторона, которая его образует, прилежащая. Сторона напротив, противолежащая. В другом остром угле имена меняются местами.</p>
+  </aside>
+  <div class="main">
+    <p>Возьми прямоугольный треугольник и выбери в нём острый угол α. У катетов появляются имена относительно этого угла: <b>противолежащий</b> лежит напротив угла, <b>прилежащий</b> образует его вместе с гипотенузой.</p>
+    <div class="key">
+      <span><span class="s">sin α</span> = <span class="f"><b>противолежащий</b><b>гипотенуза</b></span></span>
+      <span><span class="c">cos α</span> = <span class="f"><b>прилежащий</b><b>гипотенуза</b></span></span>
+      <span>tg α = <span class="f"><b>противолежащий</b><b>прилежащий</b></span></span>
+    </div>
+    <figure class="fig">
+      <div class="row">
+        <div class="draw"><svg id="t1-svg" viewBox="0 0 340 300" role="img" aria-label="Прямоугольный треугольник с настраиваемым углом и размером"></svg></div>
+        <div class="read" id="t1-read"></div>
+      </div>
+      <div class="ctrls">
+        <label class="sl">Угол α <input type="range" id="t1-angle" min="10" max="80" value="37"></label>
+        <label class="sl">Размер <input type="range" id="t1-size" min="2" max="10" step="0.5" value="5"></label>
+      </div>
+    </figure>
+    <ol class="plain">
+      <li>Двигай «размер». Стороны меняются, а синус и косинус стоят на месте.</li>
+      <li>Двигай угол. Теперь числа меняются.</li>
+      <li>Найди угол, при котором синус и косинус равны. Что это за треугольник?</li>
+    </ol>
+    <p>Значит, у каждого угла есть свой синус, и он один на все треугольники. Отсюда и польза: зная угол и одну сторону, можно вычислить другую. Катет равен гипотенузе, умноженной на синус. Катет короче гипотенузы, поэтому синус и косинус острого угла всегда меньше 1.</p>
+    <div class="tasks" data-set="s1"></div>
+    <label class="done"><input type="checkbox" id="done-1" data-done="1"> Шаг пройден</label>
+  </div>
+</section>
+
+<!-- ШАГ 2 -->
+<section class="step" id="step-2">
+  <header>
+    <p class="eyebrow">Шаг 2 · около 15 минут</p>
+    <h2>Откуда берутся ½, √2/2 и √3/2</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>Попросите</b> нарисовать оба треугольника на бумаге и вывести значения самой. Кто умеет вывести таблицу за минуту, на контрольной её не забудет.</p>
+    <p><b>Проверка:</b> закройте таблицу и спросите вразброс sin 60°, cos 30°, cos 60°, tg 45°.</p>
+  </aside>
+  <div class="main">
+    <p>Значения для 30°, 45° и 60° можно вывести, а не заучивать. Нужны два треугольника и теорема Пифагора.</p>
+    <div class="row">
+      <figure class="fig" style="flex:1 1 260px;min-width:0">
+        <svg viewBox="0 0 220 180" role="img" aria-label="Половина квадрата со стороной 1 и диагональю корень из двух" style="max-width:280px;width:100%;height:auto;display:block">
+          <path d="M30 150 L170 150 L170 10 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M156 150 V136 H170" fill="none" stroke="currentColor"/>
+          <path d="M58 150 A28 28 0 0 0 49.8 130.2" fill="none" stroke="currentColor"/>
+          <text class="lb tfg" x="64" y="143">45°</text>
+          <text class="lb tcos" x="100" y="170" text-anchor="middle">1</text>
+          <text class="lb tsin" x="182" y="84">1</text>
+          <text class="lb tfg" x="84" y="72" text-anchor="end">√2</text>
+        </svg>
+        <figcaption>Половина квадрата. По Пифагору диагональ равна √2. <span class="s">sin 45°</span> = <span class="f m"><b>1</b><b>√2</b></span> = <span class="f m"><b>√2</b><b>2</b></span>, и <span class="c">cos 45°</span> такой же.</figcaption>
+      </figure>
+      <figure class="fig" style="flex:1 1 260px;min-width:0">
+        <svg viewBox="0 0 220 180" role="img" aria-label="Половина равностороннего треугольника со стороной 2" style="max-width:280px;width:100%;height:auto;display:block">
+          <path d="M20 145 L159 145 L159 65 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M145 145 V131 H159" fill="none" stroke="currentColor"/>
+          <path d="M52 145 A32 32 0 0 0 47.7 129" fill="none" stroke="currentColor"/>
+          <text class="lb tfg" x="58" y="139">30°</text>
+          <text class="lb tfg" x="130" y="88" text-anchor="middle">60°</text>
+          <text class="lb tcos" x="90" y="166" text-anchor="middle">√3</text>
+          <text class="lb tsin" x="171" y="110">1</text>
+          <text class="lb tfg" x="78" y="94" text-anchor="end">2</text>
+        </svg>
+        <figcaption>Половина равностороннего треугольника со стороной 2. Катет напротив 30° равен 1, второй катет √3. <span class="s">sin 30°</span> = <span class="f m"><b>1</b><b>2</b></span>, <span class="c">cos 30°</span> = <span class="f m"><b>√3</b><b>2</b></span>.</figcaption>
+      </figure>
+    </div>
+    <div class="tscroll"><table class="vals" data-vals="0,30,45,60,90"></table></div>
+    <p>Правило для запоминания: в строке синуса под корнем стоят 0, 1, 2, 3, 4, и всё делится на 2. Получается <span class="m"><span class="f"><b>√0</b><b>2</b></span>, <span class="f"><b>√1</b><b>2</b></span>, <span class="f"><b>√2</b><b>2</b></span>, <span class="f"><b>√3</b><b>2</b></span>, <span class="f"><b>√4</b><b>2</b></span></span>. Косинус идёт теми же значениями в обратном порядке.</p>
+    <div class="tasks" data-set="s2"></div>
+    <label class="done"><input type="checkbox" id="done-2" data-done="2"> Шаг пройден</label>
+  </div>
+</section>
+
+<!-- ШАГ 3 -->
+<section class="step" id="step-3">
+  <header>
+    <p class="eyebrow">Шаг 3 · около 25 минут</p>
+    <h2>Окружность: углы больше 90°</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>Самый важный шаг.</b> Если здесь щёлкнуло, всё дальше покажется простым. Не торопитесь.</p>
+    <p><b>Перед каждым движением спросите:</b> «Куда попадёт точка при 150°? Какой будет знак у косинуса?»</p>
+    <p><b>Частый вопрос:</b> «Как длина может быть отрицательной?» Здесь это уже координата, а не длина. Левее оси y координата x отрицательная.</p>
+    <p><b>Вычисление:</b> когда она дойдёт до sin 120°, закройте четыре действия и попросите повторить их на 150°. Если забыла значения для 30°, 45° и 60°, вернитесь к шагу 2.</p>
+    <p>В 9 классе углы обычно берут от 0° до 180°, в 10 классе любые.</p>
+  </aside>
+  <div class="main">
+    <p>В прямоугольном треугольнике нет угла в 120°, а в обычном треугольнике такой угол бывает. Поэтому определение расширяют.</p>
+    <p>Нарисуем окружность радиуса 1 с центром в начале координат. От правой точки откладываем угол α против часовой стрелки и попадаем в точку P.</p>
+    <div class="key"><span><span class="c">cos α</span> = координата x точки P</span><span><span class="s">sin α</span> = координата y точки P</span></div>
+    <p>Для острого угла ничего не сломалось. Гипотенуза здесь равна радиусу, то есть 1, поэтому катет делить на гипотенузу значит просто взять длину катета.</p>
+    <figure class="fig" id="c3"></figure>
+    <ol class="plain">
+      <li>Поставь 30°. Вот треугольник из шага 2: высота ½.</li>
+      <li>Поставь 120°. Точка ушла влево, поэтому косинус стал отрицательным.</li>
+      <li>При каких углах синус равен 1 и −1? При каких косинус равен нулю?</li>
+      <li>Может ли синус быть равен 1,2? Подумай, почему нет.</li>
+    </ol>
+    <h3>Как вычислить sin 120° и cos 120°</h3>
+    <p>Рисунок показывает, где находится точка. Чтобы получить её координаты, рядом с точкой строим прямоугольный треугольник. Его катеты находим по таблице из шага 2.</p>
+    <div class="row">
+      <svg viewBox="0 10 220 130" role="img" aria-label="Точка на окружности при угле 120 градусов. Прямоугольный треугольник с углом 60 градусов при центре, гипотенузой 1, катетами одна вторая и корень из трёх пополам" style="flex:1 1 280px;max-width:380px;min-width:0;height:auto;background:var(--surface);border:1px solid var(--line)">
+        <path d="M5 110H215M110 15V135" stroke="var(--muted)" fill="none"/>
+        <circle cx="110" cy="110" r="90" fill="none" stroke="var(--fg)" stroke-width="1.2"/>
+        <path d="M110 110L65 32.1" stroke="var(--fg)" stroke-width="2" fill="none"/>
+        <path d="M110 110H65" stroke="var(--cos)" stroke-width="4" fill="none"/>
+        <path d="M65 110V32.1" stroke="var(--sin)" stroke-width="4" fill="none"/>
+        <path d="M71 110V104H65" stroke="var(--fg)" fill="none"/>
+        <path d="M126 110A16 16 0 0 0 102 96.14" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
+        <path d="M101 94.4A18 18 0 0 0 92 110" stroke="var(--mirror)" stroke-width="2" fill="none"/>
+        <circle cx="65" cy="32.1" r="4.5" fill="var(--accent)"/>
+        <text class="small tacc" x="124" y="99">120°</text>
+        <text class="small tmir" x="80" y="99" text-anchor="middle">60°</text>
+        <text class="small tfg" x="92" y="66">1</text>
+        <text class="small tsin" x="59" y="86" text-anchor="end">√3/2</text>
+        <text class="small tcos" x="87" y="124" text-anchor="middle">−1/2</text>
+      </svg>
+      <ol class="plain" style="flex:1 1 280px;min-width:0;margin:0">
+        <li><b>Найди четверть.</b> 120° лежит во II четверти: точка левее оси y и выше оси x.</li>
+        <li><b>Найди острый угол треугольника.</b> Это угол между радиусом и осью x: 180° − 120° = 60°.</li>
+        <li><b>Найди длины катетов.</b> Гипотенуза равна 1, поэтому катеты равны sin 60° = <span class="f m"><b>√3</b><b>2</b></span> и cos 60° = <span class="f m"><b>1</b><b>2</b></span>.</li>
+        <li><b>Поставь знаки.</b> Точка выше оси x, значит y &gt; 0. Точка левее оси y, значит x &lt; 0.</li>
+      </ol>
+    </div>
+    <div class="key">
+      <span><span class="s">sin 120°</span> = <span class="f"><b>√3</b><b>2</b></span></span>
+      <span><span class="c">cos 120°</span> = −<span class="f"><b>1</b><b>2</b></span></span>
+    </div>
+    <p>Для других углов порядок тот же. Меняется только расчёт острого угла:</p>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Четверть</th><th>Острый угол</th><th class="lf">Пример</th><th class="lf">Результат</th></tr></thead>
+        <tbody>
+          <tr><td>II</td><td class="m">180° − α</td><td class="lf m">150°: острый угол 30°</td><td class="lf m">sin 150° = <span class="f"><b>1</b><b>2</b></span>, cos 150° = −<span class="f"><b>√3</b><b>2</b></span></td></tr>
+          <tr><td>III</td><td class="m">α − 180°</td><td class="lf m">225°: острый угол 45°</td><td class="lf m">sin 225° = −<span class="f"><b>√2</b><b>2</b></span>, cos 225° = −<span class="f"><b>√2</b><b>2</b></span></td></tr>
+          <tr><td>IV</td><td class="m">360° − α</td><td class="lf m">300°: острый угол 60°</td><td class="lf m">sin 300° = −<span class="f"><b>√3</b><b>2</b></span>, cos 300° = <span class="f"><b>1</b><b>2</b></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Проверь: поставь на большом рисунке 120° и сравни с тем, что получилось. Так можно считать углы, у которых острый угол равен 30°, 45° или 60°. Для других углов значение находят на калькуляторе, а этот способ помогает проверить знак.</p>
+    <p>Точка не выходит за окружность, поэтому синус и косинус любого угла лежат от −1 до 1. Знак определяется четвертью, в которой находится точка. Тангенс теперь считается как <span class="m">tg α = <span class="f"><b>sin α</b><b>cos α</b></span></span>.</p>
+    <div class="tasks" data-set="s3"></div>
+    <label class="done"><input type="checkbox" id="done-3" data-done="3"> Шаг пройден</label>
+  </div>
+</section>
+
+<!-- ШАГ 4 -->
+<section class="step" id="step-4">
+  <header>
+    <p class="eyebrow">Шаг 4 · около 20 минут</p>
+    <h2>Формулы, которые видны на окружности</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>Разбор примера:</b> после объяснения закройте решение и попросите повторить его самостоятельно.</p>
+    <p><b>Ловушка:</b> после корня получается плюс-минус. Выбрать знак помогает только четверть. Спросите: «Где лежит тупой угол? Значит, какой знак?»</p>
+    <p><b>Запись:</b> sin²α значит (sin α)². Это квадрат числа, а угол в квадрат не возводится.</p>
+  </aside>
+  <div class="main">
+    <p>Точка P, её проекция на ось x и центр образуют прямоугольный треугольник с катетами |x|, |y| и гипотенузой 1. Теорема Пифагора даёт главную формулу темы:</p>
+    <div class="key"><span class="big"><span class="s">sin²α</span> + <span class="c">cos²α</span> = 1</span></div>
+    <h3>Разбор: нашли синус, ищем косинус</h3>
+    <p>Дано: <span class="m">sin α = <span class="f"><b>3</b><b>5</b></span></span>, угол α тупой. Найти cos α.</p>
+    <ol class="plain">
+      <li class="m">cos²α = 1 − sin²α = 1 − <span class="f"><b>9</b><b>25</b></span> = <span class="f"><b>16</b><b>25</b></span></li>
+      <li>Значит, <span class="m">cos α = <span class="f"><b>4</b><b>5</b></span></span> или <span class="m">cos α = −<span class="f"><b>4</b><b>5</b></span></span>. Формула сама знак не выбирает.</li>
+      <li>Тупой угол лежит во второй четверти, там x &lt; 0. Ответ: <span class="m">cos α = −<span class="f"><b>4</b><b>5</b></span></span>.</li>
+    </ol>
+    <h3>Зеркало: угол 180° − α</h3>
+    <p>Отразим точку P относительно оси y. Высота останется той же, а x сменит знак. На рисунке двигай точку и смотри, как ведёт себя её зелёное отражение.</p>
+    <figure class="fig" id="c4"></figure>
+    <div class="key">
+      <span>sin(180° − α) = <span class="s">sin α</span></span>
+      <span>cos(180° − α) = −<span class="c">cos α</span></span>
+    </div>
+    <p>Так тупые углы сводятся к острым. Например, <span class="m">sin 150° = sin 30° = <span class="f"><b>1</b><b>2</b></span></span>, а <span class="m">cos 120° = −cos 60° = −<span class="f"><b>1</b><b>2</b></span></span>.</p>
+    <p>Ещё одна пара. Острые углы прямоугольного треугольника в сумме дают 90°, и катет, противолежащий одному из них, прилежит к другому. Поэтому:</p>
+    <div class="key">
+      <span>sin(90° − α) = <span class="c">cos α</span></span>
+      <span>cos(90° − α) = <span class="s">sin α</span></span>
+    </div>
+    <div class="tasks" data-set="s4"></div>
+    <label class="done"><input type="checkbox" id="done-4" data-done="4"> Шаг пройден</label>
+  </div>
+</section>
+
+<!-- ШАГ 5 -->
+<section class="step" id="step-5">
+  <header>
+    <p class="eyebrow">Шаг 5 · около 20 минут</p>
+    <h2>Радианы и графики</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p>Это материал 10 класса. Если в школе радианы ещё не проходили, шаг можно отложить и сразу идти к теоремам.</p>
+    <p><b>Калькулятор:</b> проверьте вместе режим DEG или RAD. В режиме RAD sin 30 даст −0,988, потому что это синус 30 радиан.</p>
+    <p><b>Спросите:</b> «Почему график повторяется?» Ответ: после полного оборота точка возвращается на то же место.</p>
+  </aside>
+  <div class="main">
+    <p>Угол можно мерить длиной дуги на окружности радиуса 1. Один радиан соответствует дуге длиной в один радиус. Длина всей окружности равна 2π, значит:</p>
+    <div class="key"><span class="big">360° = 2π</span><span class="big">180° = π</span></div>
+    <p>Из этого равенства следует весь перевод. Чтобы перевести градусы в радианы, умножай на <span class="m"><span class="f"><b>π</b><b>180</b></span></span>: например, <span class="m">60° = <span class="f"><b>60π</b><b>180</b></span> = <span class="f"><b>π</b><b>3</b></span></span>. Обратно подставляй вместо π число 180°: <span class="m"><span class="f"><b>π</b><b>6</b></span> = <span class="f"><b>180°</b><b>6</b></span> = 30°</span>.</p>
+    <p>Теперь развернём движение точки во времени. Высота точки при движении по окружности рисует синусоиду, а её координата x рисует косинусоиду.</p>
+    <figure class="fig">
+      <div id="c5"></div>
+      <div class="graph"><svg id="g5" viewBox="0 0 480 212" role="img" aria-label="Графики синуса и косинуса от 0 до 360 градусов с отмеченным текущим углом"></svg></div>
+    </figure>
+    <ul class="plain">
+      <li>Синус начинается с 0, косинус начинается с 1. Косинус это тот же график, сдвинутый влево на 90°.</li>
+      <li>Значения повторяются через 360°, то есть через 2π. Например, sin 390° = sin 30°.</li>
+      <li>Если крутить по часовой стрелке, угол отрицательный. Тогда sin(−α) = −sin α, а cos(−α) = cos α. Проверь это по рисунку: точки α и −α симметричны относительно оси x.</li>
+    </ul>
+    <div class="tasks" data-set="s5"></div>
+    <label class="done"><input type="checkbox" id="done-5" data-done="5"> Шаг пройден</label>
+  </div>
+</section>
+
+<!-- ШАГ 6 -->
+<section class="step" id="step-6">
+  <header>
+    <p class="eyebrow">Шаг 6 · около 20 минут</p>
+    <h2>Теорема косинусов</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>Покажите связь:</b> поставьте угол 90°. Поправка исчезнет, и останется теорема Пифагора. Обычно после этого формула перестаёт выглядеть чужой.</p>
+    <p><b>Две частые ошибки:</b> забывают извлечь корень в конце и теряют знак при тупом угле. Минус на минус даёт плюс.</p>
+  </aside>
+  <div class="main">
+    <p>Теорема Пифагора работает только при прямом угле. Теорема косинусов работает в любом треугольнике и добавляет к ней поправку:</p>
+    <div class="key"><span class="big">a² = b² + c² − 2bc · <span class="c">cos A</span></span></div>
+    <p>Здесь a лежит напротив угла A, а b и c образуют этот угол.</p>
+    <figure class="fig">
+      <div class="row">
+        <div class="draw"><svg id="t6-svg" viewBox="0 0 400 270" role="img" aria-label="Треугольник с настраиваемыми сторонами b, c и углом A"></svg></div>
+        <div class="read" id="t6-read"></div>
+      </div>
+      <div class="ctrls">
+        <label class="sl">Угол A <input type="range" id="t6-a" min="20" max="160" value="60"></label>
+        <label class="sl">b <input type="range" id="t6-b" min="2" max="8" value="5"></label>
+        <label class="sl">c <input type="range" id="t6-c" min="2" max="8" value="8"></label>
+      </div>
+    </figure>
+    <p>Сделай угол острым, потом тупым. При остром угле косинус положителен, поэтому сторона a короче, чем была бы по Пифагору. При тупом угле косинус отрицателен, и сторона a длиннее.</p>
+    <h3>Два вида задач</h3>
+    <p><b>Две стороны и угол между ними.</b> Дано b = 3, c = 5, A = 120°.</p>
+    <p class="m">a² = 9 + 25 − 2·3·5·(−<span class="f"><b>1</b><b>2</b></span>) = 34 + 15 = 49, значит a = 7.</p>
+    <p><b>Три стороны.</b> Дано a = 7, b = 8, c = 5. Выразим косинус из формулы:</p>
+    <p class="m">cos A = <span class="f"><b>b² + c² − a²</b><b>2bc</b></span> = <span class="f"><b>64 + 25 − 49</b><b>80</b></span> = <span class="f"><b>1</b><b>2</b></span>, значит A = 60°.</p>
+    <details>
+      <summary>Откуда берётся формула</summary>
+      <div class="m">
+        <p>Опустим из вершины C высоту на прямую AB. Её длина h = b·sin A, основание находится на расстоянии b·cos A от A, а до B остаётся c − b·cos A.</p>
+        <p>По теореме Пифагора: a² = (b·sin A)² + (c − b·cos A)² = b²sin²A + c² − 2bc·cos A + b²cos²A.</p>
+        <p>Вынесем b² и используем sin²A + cos²A = 1. Получаем a² = b² + c² − 2bc·cos A.</p>
+      </div>
+    </details>
+    <div class="tasks" data-set="s6"></div>
+    <label class="done"><input type="checkbox" id="done-6" data-done="6"> Шаг пройден</label>
+  </div>
+</section>
+
+<!-- ШАГ 7 -->
+<section class="step" id="step-7">
+  <header>
+    <p class="eyebrow">Шаг 7 · около 20 минут</p>
+    <h2>Теорема синусов</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>Спросите перед задачей:</b> «Что дано? Какая из теорем подходит?» Сам выбор теоремы важнее вычислений, таблица ниже как раз для этого.</p>
+    <p><b>Для самых внимательных:</b> если даны две стороны и угол напротив одной из них, ответов бывает два: синус острого и тупого угла совпадает.</p>
+  </aside>
+  <div class="main">
+    <p>В любом треугольнике сторона, делённая на синус противолежащего угла, даёт одно и то же число. Это число равно диаметру описанной окружности.</p>
+    <div class="key"><span class="big"><span class="f"><b>a</b><b>sin A</b></span> = <span class="f"><b>b</b><b>sin B</b></span> = <span class="f"><b>c</b><b>sin C</b></span> = 2R</span></div>
+    <figure class="fig">
+      <div class="row">
+        <div class="draw"><svg id="t7-svg" viewBox="0 0 400 340" role="img" aria-label="Треугольник, вписанный в окружность, вершины можно перетаскивать"></svg></div>
+        <div class="read" id="t7-read"></div>
+      </div>
+      <figcaption>Перетаскивай вершины по окружности (мышью, пальцем или стрелками на клавиатуре). Радиус равен 5. Стороны и углы меняются, а отношение остаётся равным 10.</figcaption>
+    </figure>
+    <h3>Разбор</h3>
+    <p>Дано a = 6, A = 30°, B = 45°. Найти b.</p>
+    <p class="m">b = <span class="f"><b>a · sin B</b><b>sin A</b></span> = 6 · <span class="f"><b>√2</b><b>2</b></span> : <span class="f"><b>1</b><b>2</b></span> = 6√2 ≈ 8,49</p>
+    <h3>Какую теорему выбрать</h3>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th class="lf">Что известно</th><th class="lf">Что берём</th></tr></thead>
+        <tbody>
+          <tr><td class="lf">Две стороны и угол между ними</td><td class="lf">Теорема косинусов, найдём третью сторону</td></tr>
+          <tr><td class="lf">Три стороны</td><td class="lf">Теорема косинусов, найдём угол</td></tr>
+          <tr><td class="lf">Сторона и два угла</td><td class="lf">Теорема синусов. Третий угол: 180° минус два известных</td></tr>
+          <tr><td class="lf">Две стороны и угол напротив одной из них</td><td class="lf">Теорема синусов, проверяя, возможны ли два ответа</td></tr>
+          <tr><td class="lf">Нужен радиус описанной окружности</td><td class="lf">Теорема синусов: 2R = a / sin A</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Бонус: площадь треугольника тоже считается через синус. Две стороны и угол между ними дают <span class="m">S = <span class="f"><b>1</b><b>2</b></span> ab · sin C</span>.</p>
+    <div class="tasks" data-set="s7"></div>
+    <label class="done"><input type="checkbox" id="done-7" data-done="7"> Шаг пройден</label>
+  </div>
+</section>
+
+<!-- ШАГ 8 -->
+<section class="step" id="step-8">
+  <header>
+    <p class="eyebrow">Шаг 8 · около 20 минут</p>
+    <h2>Контрольная и тренажёр</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>Контрольная:</b> решайте без шпаргалки. Каждая ошибка показывает, к какому шагу вернуться.</p>
+    <p><b>Тренажёр:</b> случайные значения для устного счёта. Несколько минут в начале каждого занятия дают больше, чем час заучивания в один вечер.</p>
+    <p>Ответы вводятся как <span class="m">0,5</span>, <span class="m">1/2</span>, <span class="m">√3/2</span> или <span class="m">корень3/2</span>.</p>
+  </aside>
+  <div class="main">
+    <div class="tasks" data-set="final"></div>
+    <h3 id="drill" style="scroll-margin-top:60px">Тренажёр значений</h3>
+    <div class="drill" id="drill-box"></div>
+    <label class="done"><input type="checkbox" id="done-8" data-done="8"> Шаг пройден</label>
+  </div>
+</section>
+
+<!-- ШПАРГАЛКА -->
+<section class="step" id="cheat">
+  <header>
+    <p class="eyebrow">На память</p>
+    <h2>Шпаргалка и частые ошибки</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p>Хорошая последняя просьба: пусть перепишет эту страницу от руки на один лист. Если какую-то строку она не может объяснить, стоит вернуться к соответствующему шагу.</p>
+  </aside>
+  <div class="main">
+    <div class="tscroll"><table class="vals" data-vals="0,30,45,60,90,120,135,150,180" data-rad="1"></table></div>
+    <div class="sheet">
+      <div>
+        <h3>Определения</h3>
+        <p><span class="c">cos α</span> = x точки на окружности</p>
+        <p><span class="s">sin α</span> = y точки на окружности</p>
+        <p>tg α = <span class="f"><b>sin α</b><b>cos α</b></span></p>
+      </div>
+      <div>
+        <h3>Связи</h3>
+        <p>sin²α + cos²α = 1</p>
+        <p>sin(180° − α) = sin α</p>
+        <p>cos(180° − α) = −cos α</p>
+        <p>sin(90° − α) = cos α</p>
+        <p>cos(90° − α) = sin α</p>
+      </div>
+      <div>
+        <h3>Знаки по четвертям</h3>
+        <p>I: cos +, sin +</p>
+        <p>II: cos −, sin +</p>
+        <p>III: cos −, sin −</p>
+        <p>IV: cos +, sin −</p>
+      </div>
+      <div>
+        <h3>Треугольник</h3>
+        <p>a² = b² + c² − 2bc · cos A</p>
+        <p><span class="f"><b>a</b><b>sin A</b></span> = <span class="f"><b>b</b><b>sin B</b></span> = <span class="f"><b>c</b><b>sin C</b></span> = 2R</p>
+        <p>S = <span class="f"><b>1</b><b>2</b></span> ab · sin C</p>
+      </div>
+    </div>
+    <h3>Шесть частых ошибок</h3>
+    <ol class="plain">
+      <li><b>Путают sin и cos.</b> Представь окружность: при маленьком угле точка стоит низко, значит sin 30° меньше, чем cos 30°.</li>
+      <li><b>sin 2α считают равным 2 sin α.</b> Это неверно: sin 60° ≈ 0,87, а 2 · sin 30° = 1.</li>
+      <li><b>Получают синус больше 1.</b> Если вышло sin α = 1,2, в вычислениях ошибка. Такого угла нет.</li>
+      <li><b>Теряют знак.</b> После <span class="m">cos²α = …</span> нужно определить знак по четверти.</li>
+      <li><b>Теряют корень в теореме косинусов.</b> Формула даёт a². Сторона a получается после извлечения корня.</li>
+      <li><b>Забывают про режим калькулятора.</b> Проверяй, стоит DEG или RAD.</li>
+    </ol>
+    <p class="foot">Вернуться к <a href="#start">началу</a>.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+/*PARSE-START*/
+function parseNum(str){
+  var s=String(str).trim().toLowerCase().replace(/\s+/g,'').replace(/,/g,'.').replace(/[−–—]/g,'-')
+    .replace(/корень(из)?|кор|sqrt/g,'√').replace(/пи|pi/g,'π').replace(/(км|см|м|градусов|градуса|градус|град|°)$/,'')
+    .replace(/[×·]/g,'*').replace(/:/g,'/').replace(/½/g,'(1/2)');
+  if(!s)return null;
+  var i=0;
+  function expr(){var v=term();while(s[i]==='+'||s[i]==='-'){var o=s[i++],t=term();v=o==='+'?v+t:v-t;}return v;}
+  function term(){var v=unary();for(;;){var c=s[i];
+    if(c==='*'){i++;v*=unary();}else if(c==='/'){i++;v/=unary();}
+    else if(c&&/[0-9.√π(]/.test(c)){v*=unary();}else return v;}}
+  function unary(){if(s[i]==='-'){i++;return -unary();}if(s[i]==='+'){i++;return unary();}return prim();}
+  function prim(){var c=s[i];
+    if(c==='√'){i++;return Math.sqrt(prim());}
+    if(c==='π'){i++;return Math.PI;}
+    if(c==='('){i++;var v=expr();if(s[i++]!==')')throw 0;return v;}
+    var m=s.slice(i).match(/^(\d+(\.\d*)?|\.\d+)/);if(!m)throw 0;i+=m[0].length;return +m[0];}
+  try{var v=expr();return (i===s.length&&isFinite(v))?v:null;}catch(e){return null;}
+}
+/*PARSE-END*/
+
+(function(){
+document.documentElement.lang='ru';
+var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var rad=function(d){return d*Math.PI/180};
+var fr=function(a,b){return '<span class="f"><b>'+a+'</b><b>'+b+'</b></span>'};
+var fmt=function(x,n){n=n===undefined?2:n;var s=x.toFixed(n);if(/^-0(\.0+)?$/.test(s))s=s.slice(1);return s.replace('.',',').replace('-','−')};
+var store={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+var VAL=['0',fr(1,2),fr('√2',2),fr('√3',2),'1'], ABS=[0,.5,Math.SQRT2/2,Math.sqrt(3)/2,1];
+var norm=function(d){return ((d%360)+360)%360};
+function kOf(deg,fn){var v=fn==='sin'?Math.sin(rad(deg)):Math.cos(rad(deg));var a=Math.abs(v);
+  for(var k=0;k<5;k++)if(Math.abs(a-ABS[k])<1e-9)return {k:k,neg:v<-1e-9};return null;}
+function exact(deg,fn){var d=norm(deg);if(d%30&&d%45)return null;var r=kOf(d,fn);return r?(r.neg?'−':'')+VAL[r.k]:null;}
+function gcd(a,b){return b?gcd(b,a%b):a}
+function radLabel(deg){if(deg===0)return '0';var g=gcd(deg,180),n=deg/g,d=180/g,t=(n===1?'':n)+'π';return d===1?t:fr(t,d);}
+var pt=function(cx,cy,r,d){return [cx+r*Math.cos(rad(d)),cy-r*Math.sin(rad(d))]};
+function arc(cx,cy,r,d1,d2){if(d2-d1<=0.01)return '';if(d2-d1>=359.9){return 'M'+(cx+r)+' '+cy+'A'+r+' '+r+' 0 1 0 '+(cx-r)+' '+cy+'A'+r+' '+r+' 0 1 0 '+(cx+r)+' '+cy;}
+  var p=pt(cx,cy,r,d1),q=pt(cx,cy,r,d2);return 'M'+p[0]+' '+p[1]+'A'+r+' '+r+' 0 '+(d2-d1>180?1:0)+' 0 '+q[0]+' '+q[1];}
+function T(x,y,s,cls,anc){return '<text x="'+x+'" y="'+y+'" class="lb '+(cls||'tfg')+'"'+(anc?' text-anchor="'+anc+'"':'')+'>'+s+'</text>';}
+function L(x1,y1,x2,y2,col,w,extra){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width="'+(w||1)+'" '+(extra||'')+'/>';}
+
+/* ---- Вводный рисунок ---- */
+(function(){
+  var sv=$('#hero-svg'),a=50;
+  function draw(){var C=100,R=78,p=pt(C,C,R,a);
+    sv.innerHTML=L(10,C,190,C,'var(--line)')+L(C,10,C,190,'var(--line)')
+      +'<circle cx="100" cy="100" r="78" fill="none" stroke="var(--fg)" stroke-width="1.5"/>'
+      +L(C,C,p[0],p[1],'var(--fg)',1)
+      +L(C,C,p[0],C,'var(--cos)',4)+L(p[0],C,p[0],p[1],'var(--sin)',4)
+      +'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="6" fill="var(--accent)"/>';}
+  draw();
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  var last=0;function tick(t){if(last){a=(a+(t-last)*0.018)%360;draw();}last=t;requestAnimationFrame(tick);}
+  requestAnimationFrame(tick);
+})();
+
+/* ---- Шаг 1: треугольник ---- */
+(function(){
+  var ia=$('#t1-angle'),is=$('#t1-size'),sv=$('#t1-svg'),rd=$('#t1-read');
+  function draw(){var A=+ia.value,h=+is.value,U=25,ox=40,oy=270,op=h*Math.sin(rad(A)),ad=h*Math.cos(rad(A));
+    var bx=ox+ad*U,cy=oy-op*U,g='';
+    for(var x=15;x<=340;x+=25)g+=L(x,0,x,300,'var(--grid)');
+    for(var y=20;y<=300;y+=25)g+=L(0,y,340,y,'var(--grid)');
+    sv.innerHTML=g
+      +L(ox,oy,bx,oy,'var(--cos)',4)+L(bx,oy,bx,cy,'var(--sin)',4)+L(ox,oy,bx,cy,'var(--fg)',2.5)
+      +'<path d="M'+(bx-12)+' '+oy+'V'+(oy-12)+'H'+bx+'" fill="none" stroke="var(--fg)"/>'
+      +'<path d="'+arc(ox,oy,26,0,A)+'" fill="none" stroke="var(--accent)" stroke-width="2"/>'
+      +T(ox+32,oy-8,'α','tacc')
+      +T((ox+bx)/2,oy+20,'прилежащий','tcos','middle')
+      +T(bx+8,(oy+cy)/2+5,'противо-','tsin')+T(bx+8,(oy+cy)/2+22,'лежащий','tsin')
+      +T((ox+bx)/2-10,(oy+cy)/2-8,'гипотенуза','tfg','end');
+    rd.innerHTML='<div class="ln"><span class="tag">катет напротив</span> <span class="s">'+fmt(op)+'</span></div>'
+      +'<div class="ln"><span class="tag">катет рядом</span> <span class="c">'+fmt(ad)+'</span></div>'
+      +'<div class="ln"><span class="tag">гипотенуза</span> '+fmt(h)+'</div>'
+      +'<div class="ln"><span class="s">sin '+A+'°</span> = '+fr(fmt(op),fmt(h))+' = <b>'+fmt(op/h,3)+'</b></div>'
+      +'<div class="ln"><span class="c">cos '+A+'°</span> = '+fr(fmt(ad),fmt(h))+' = <b>'+fmt(ad/h,3)+'</b></div>'
+      +'<div class="ln">tg '+A+'° = '+fr(fmt(op),fmt(ad))+' = <b>'+fmt(op/ad,3)+'</b></div>';}
+  ia.addEventListener('input',draw);is.addEventListener('input',draw);draw();
+})();
+
+/* ---- Таблицы значений ---- */
+var TG={0:'0',30:fr('√3',3),45:'1',60:'√3',90:'нет',120:'−√3',135:'−1',150:'−'+fr('√3',3),180:'0'};
+$$('[data-vals]').forEach(function(t){
+  var ds=t.getAttribute('data-vals').split(',').map(Number),h='<tbody><tr><th>α</th>'+ds.map(function(d){return '<th>'+d+'°</th>'}).join('')+'</tr>';
+  if(t.hasAttribute('data-rad'))h+='<tr><th>рад</th>'+ds.map(function(d){return '<td>'+radLabel(d)+'</td>'}).join('')+'</tr>';
+  h+='<tr><th class="s">sin α</th>'+ds.map(function(d){return '<td>'+exact(d,'sin')+'</td>'}).join('')+'</tr>';
+  h+='<tr><th class="c">cos α</th>'+ds.map(function(d){return '<td>'+exact(d,'cos')+'</td>'}).join('')+'</tr>';
+  h+='<tr><th>tg α</th>'+ds.map(function(d){return '<td>'+TG[d]+'</td>'}).join('')+'</tr></tbody>';
+  t.innerHTML=h;
+});
+
+/* ---- Окружность ---- */
+var SNAP=[0,30,45,60,90,120,135,150,180,210,225,240,270,300,315,330,360];
+function makeCircle(host,o){
+  var C=200,R=140,P=host.id,max=o.max||360,st='';
+  st+=L(45,C,355,C,'var(--muted)')+L(C,45,C,355,'var(--muted)');
+  st+='<circle cx="200" cy="200" r="140" fill="none" stroke="var(--fg)" stroke-width="1.5"/>';
+  st+=T(352,192,'x','tmut','end')+T(208,54,'y','tmut');
+  st+=T(332,216,'1','tmut')+T(66,216,'−1','tmut')+T(206,72,'1','tmut')+T(206,332,'−1','tmut');
+  SNAP.slice(0,16).forEach(function(d){if(max<360&&d>max)return;var p=pt(C,C,R,d),q=pt(C,C,162,d);
+    st+='<g class="tick" data-d="'+d+'"><circle cx="'+q[0]+'" cy="'+q[1]+'" r="15" fill="transparent"/><circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.5" fill="var(--muted)"/><text x="'+q[0]+'" y="'+(q[1]+4)+'" text-anchor="middle" class="small tmut">'+d+'°</text></g>';});
+  var qs=[[392,24,'end','I','cos +, sin +'],[8,24,'start','II','cos −, sin +'],[8,370,'start','III','cos −, sin −'],[392,370,'end','IV','cos +, sin −']];
+  qs.forEach(function(q,i){if(max<360&&i>1)return;st+='<g data-q="'+(i+1)+'" class="tmut"><text x="'+q[0]+'" y="'+q[1]+'" text-anchor="'+q[2]+'" class="lb">'+q[3]+'</text><text x="'+q[0]+'" y="'+(q[1]+15)+'" text-anchor="'+q[2]+'" class="small">'+q[4]+'</text></g>';});
+  host.innerHTML='<div class="row"><div class="draw"><svg viewBox="0 0 400 400" role="img" aria-label="Единичная окружность. Перетащите точку или используйте ползунок"><g>'+st+'</g><g class="dyn"></g><circle class="pv" r="9" fill="var(--accent)"/><circle class="handle" r="26"/></svg></div><div class="read"></div></div>'
+    +'<div class="ctrls"><label class="sl">Угол α <input type="range" id="'+P+'-range" min="0" max="'+max+'" value="'+o.start+'"></label>'
+    +'<label><input type="checkbox" id="'+P+'-snap" checked> Прилипать к углам из таблицы</label></div>'
+    +'<p class="figcap">Тащи точку или ползунок. Можно нажать на подпись угла.</p>';
+  var svg=$('svg',host),dyn=$('.dyn',host),pv=$('.pv',host),hd=$('.handle',host),rd=$('.read',host),rng=$('#'+P+'-range'),snap=$('#'+P+'-snap'),deg=o.start;
+  function set(d){deg=d;rng.value=d;render();if(o.onChange)o.onChange(d);}
+  function render(){var p=pt(C,C,R,deg),x=p[0],y=p[1],cs=Math.cos(rad(deg)),sn=Math.sin(rad(deg)),h='';
+    if(o.mirror){var m=pt(C,C,R,180-deg);
+      h+=L(C,C,m[0],m[1],'var(--mirror)',1.5,'stroke-dasharray="5 4"')+L(m[0],C,m[0],m[1],'var(--mirror)',3)
+       +L(C,C,m[0],C,'var(--mirror)',3)+'<circle cx="'+m[0]+'" cy="'+m[1]+'" r="7" fill="var(--mirror)"/>'
+       +T(m[0]+(m[0]<C?-10:10),m[1]-8,'180°−α','tmir',m[0]<C?'end':'start');}
+    h+=L(C,C,C,y,'var(--sin)',2.5,'opacity="0.55"')+L(x,y,C,y,'var(--muted)',1,'stroke-dasharray="4 4"');
+    h+=L(C,C,x,y,'var(--fg)',2)+L(C,C,x,C,'var(--cos)',5)+L(x,C,x,y,'var(--sin)',5);
+    h+='<path d="'+arc(C,C,32,0,deg)+'" fill="none" stroke="var(--accent)" stroke-width="2"/>';
+    if(deg>8&&deg<352){var a=pt(C,C,48,deg/2);h+=T(a[0],a[1]+5,'α','tacc','middle');}
+    if(Math.abs(cs)>.2)h+=T((C+x)/2,C+(sn>=0?18:-8),'cos α','tcos','middle');
+    if(Math.abs(sn)>.2)h+=T(x+(cs>=0?9:-9),(C+y)/2+5,'sin α','tsin',cs>=0?'start':'end');
+    dyn.innerHTML=h;
+    pv.setAttribute('cx',x);pv.setAttribute('cy',y);hd.setAttribute('cx',x);hd.setAttribute('cy',y);
+    var dn=norm(deg),q=(dn%90===0)?0:Math.ceil(dn/90);
+    $$('[data-q]',svg).forEach(function(g){g.setAttribute('class',+g.getAttribute('data-q')===q?'tacc':'tmut');});
+    var ec=exact(deg,'cos'),es=exact(deg,'sin');
+    var r='<div class="ln">α = <b>'+deg+'°</b> = '+radLabel(deg)+' рад</div>'
+      +'<div class="ln"><span class="c">cos α</span> = '+(ec?ec+' ≈ ':'')+'<b>'+fmt(cs)+'</b></div>'
+      +'<div class="ln"><span class="s">sin α</span> = '+(es?es+' ≈ ':'')+'<b>'+fmt(sn)+'</b></div>'
+      +'<div class="ln"><span class="tag">'+(q?['','I','II','III','IV'][q]+' четверть':'точка на оси')+'</span></div>';
+    if(o.identity)r+='<div class="ln">cos²α + sin²α = '+fmt(cs*cs)+' + '+fmt(sn*sn)+' = <b>1</b></div>';
+    if(o.mirror){var ms=exact(180-deg,'sin'),mc=exact(180-deg,'cos');
+      r+='<div class="ln" style="color:var(--mirror)">sin(180°−α) = '+(ms?ms+' ≈ ':'')+fmt(Math.sin(rad(180-deg)))+'</div>'
+        +'<div class="ln" style="color:var(--mirror)">cos(180°−α) = '+(mc?mc+' ≈ ':'')+fmt(Math.cos(rad(180-deg)))+'</div>';}
+    rd.innerHTML=r;}
+  rng.addEventListener('input',function(){set(+rng.value)});
+  svg.addEventListener('click',function(e){var g=e.target.closest&&e.target.closest('[data-d]');if(g)set(+g.getAttribute('data-d'));});
+  var drag=false;
+  hd.addEventListener('pointerdown',function(e){drag=true;try{hd.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault();});
+  hd.addEventListener('pointermove',function(e){if(!drag)return;var b=svg.getBoundingClientRect(),mx=(e.clientX-b.left)*400/b.width-C,my=C-(e.clientY-b.top)*400/b.height;
+    var d=Math.round(norm(Math.atan2(my,mx)*180/Math.PI));
+    if(d>max)d=d>(max+360)/2?0:max;
+    if(snap.checked){var best=null;SNAP.forEach(function(t){if(t<=max&&Math.abs(t-d)<=5&&(best===null||Math.abs(t-d)<Math.abs(best-d)))best=t;});if(best!==null)d=best;}
+    set(d);});
+  ['pointerup','pointercancel'].forEach(function(n){hd.addEventListener(n,function(){drag=false})});
+  render();
+  return {set:set};
+}
+makeCircle($('#c3'),{start:120,identity:false});
+makeCircle($('#c4'),{start:40,max:180,mirror:true,identity:true});
+
+/* ---- Шаг 5: график ---- */
+(function(){
+  var g=$('#g5'),X0=30,W=436,Y=92,A=68,xOf=function(d){return X0+d*W/360},
+    path=function(fn,to){var s='';for(var d=0;d<=to;d+=3)s+=(d?'L':'M')+xOf(d).toFixed(1)+' '+(Y-A*fn(rad(d))).toFixed(1);
+      if(to%3)s+='L'+xOf(to).toFixed(1)+' '+(Y-A*fn(rad(to))).toFixed(1);return s;},bg='';
+  [[90,'π/2'],[180,'π'],[270,'3π/2'],[360,'2π']].forEach(function(t){var x=xOf(t[0]);
+    bg+=L(x,Y-A-6,x,Y+A+6,'var(--line)')+T(x,190,t[1],'tfg','middle')+'<text x="'+x+'" y="206" text-anchor="middle" class="small tmut">'+t[0]+'°</text>';});
+  bg+=L(X0,Y,X0+W+6,Y,'var(--muted)')+L(X0,Y-A-6,X0,Y+A+6,'var(--muted)');
+  bg+=T(X0-6,Y-A+5,'1','tmut','end')+T(X0-6,Y+A+5,'−1','tmut','end')+T(X0-6,Y+5,'0','tmut','end');
+  bg+='<path d="'+path(Math.sin,360)+'" fill="none" stroke="var(--sin)" stroke-width="1.5" opacity="0.35"/><path d="'+path(Math.cos,360)+'" fill="none" stroke="var(--cos)" stroke-width="1.5" opacity="0.35"/>';
+  g.innerHTML=bg+'<g class="dyn"></g>';
+  var dyn=$('.dyn',g);
+  function up(d){var x=xOf(d);
+    dyn.innerHTML='<path d="'+path(Math.sin,d)+'" fill="none" stroke="var(--sin)" stroke-width="3"/><path d="'+path(Math.cos,d)+'" fill="none" stroke="var(--cos)" stroke-width="3"/>'
+      +L(x,Y-A-6,x,Y+A+6,'var(--accent)',1.5)
+      +'<circle cx="'+x+'" cy="'+(Y-A*Math.sin(rad(d)))+'" r="5" fill="var(--sin)"/><circle cx="'+x+'" cy="'+(Y-A*Math.cos(rad(d)))+'" r="5" fill="var(--cos)"/>';}
+  makeCircle($('#c5'),{start:150,onChange:up});up(150);
+})();
+
+/* ---- Шаг 6: теорема косинусов ---- */
+(function(){
+  var ia=$('#t6-a'),ib=$('#t6-b'),ic=$('#t6-c'),sv=$('#t6-svg'),rd=$('#t6-read');
+  function draw(){var A=+ia.value,b=+ib.value,c=+ic.value,U=22,ax=175,ay=238,cs=Math.cos(rad(A)),
+      Cx=ax+b*U*cs,Cy=ay-b*U*Math.sin(rad(A)),Bx=ax+c*U,By=ay;
+    var p=b*b+c*c,k=2*b*c*cs,a2=p-k,a=Math.sqrt(a2);
+    sv.innerHTML=L(ax,ay,Bx,By,'var(--fg)',2.5)+L(ax,ay,Cx,Cy,'var(--fg)',2.5)+L(Bx,By,Cx,Cy,'var(--accent)',4)
+      +'<path d="'+arc(ax,ay,26,0,A)+'" fill="none" stroke="var(--cos)" stroke-width="2"/>'
+      +T(ax-6,ay+20,'A','tfg','end')+T(Bx+8,By+18,'B')+T(Cx,Cy-10,'C','tfg','middle')
+      +T((ax+Bx)/2,ay+20,'c = '+c,'tfg','middle')
+      +T((ax+Cx)/2+(cs>0?-8:-10),(ay+Cy)/2-4,'b = '+b,'tfg','end')
+      +T((Bx+Cx)/2+10,(By+Cy)/2-6,'a = '+fmt(a),'tacc');
+    var msg=Math.abs(cs)<1e-9?'Угол прямой, поправка равна 0. Это теорема Пифагора.':(cs>0?'Угол острый, cos A > 0. Поправка уменьшает a².':'Угол тупой, cos A < 0. Минус на минус даёт плюс, a² растёт.');
+    rd.innerHTML='<div class="ln"><span class="c">cos '+A+'°</span> = '+(exact(A,'cos')?exact(A,'cos')+' ≈ ':'')+'<b>'+fmt(cs)+'</b></div>'
+      +'<div class="ln"><span class="tag">без поправки</span> b² + c² = '+b*b+' + '+c*c+' = '+p+'</div>'
+      +'<div class="ln"><span class="tag">поправка</span> −2bc · cos A = '+fmt(-k)+'</div>'
+      +'<div class="ln">a² = '+p+' '+(k>=0?'−':'+')+' '+fmt(Math.abs(k))+' = <b>'+fmt(a2)+'</b></div>'
+      +'<div class="ln" style="color:var(--accent)"><b>a = √'+fmt(a2)+' ≈ '+fmt(a)+'</b></div>'
+      +'<div class="ln"><span class="tag" style="font-size:.88rem">'+msg+'</span></div>';}
+  [ia,ib,ic].forEach(function(e){e.addEventListener('input',draw)});draw();
+})();
+
+/* ---- Шаг 7: теорема синусов ---- */
+(function(){
+  var sv=$('#t7-svg'),rd=$('#t7-read'),CX=200,CY=170,R=115,V=[{n:'A',d:115},{n:'B',d:215},{n:'C',d:335}];
+  sv.innerHTML='<circle cx="200" cy="170" r="115" fill="none" stroke="var(--muted)" stroke-width="1.5"/>'
+    +'<g class="dyn"></g>'+V.map(function(v,i){return '<circle class="pv'+i+'" r="8" fill="var(--accent)"/><circle class="handle" data-v="'+i+'" r="24" tabindex="0" role="slider" aria-label="Вершина '+v.n+'"/>';}).join('');
+  var dyn=$('.dyn',sv);
+  function sep(a,b){var x=Math.abs(norm(a)-norm(b));return Math.min(x,360-x)}
+  function render(){var P=V.map(function(v){return pt(CX,CY,R,v.d)}),dist=function(a,b){return Math.hypot(P[a][0]-P[b][0],P[a][1]-P[b][1])*5/R};
+    var s=[dist(1,2),dist(0,2),dist(0,1)],ang=[0,1,2].map(function(i){var j=(i+1)%3,k=(i+2)%3;
+      var v1=[P[j][0]-P[i][0],P[j][1]-P[i][1]],v2=[P[k][0]-P[i][0],P[k][1]-P[i][1]];
+      return Math.acos((v1[0]*v2[0]+v1[1]*v2[1])/(Math.hypot(v1[0],v1[1])*Math.hypot(v2[0],v2[1])))});
+    var names=['a','b','c'],h='<circle cx="200" cy="170" r="3" fill="var(--muted)"/>'+L(CX-R,CY,CX+R,CY,'var(--muted)',1,'stroke-dasharray="5 5"')+T(CX,CY+17,'диаметр 2R = 10','tmut','middle');
+    h+='<path d="M'+P[0]+'L'+P[1]+'L'+P[2]+'Z" fill="none" stroke="var(--fg)" stroke-width="2.5"/>';
+    V.forEach(function(v,i){var q=pt(CX,CY,R+22,v.d);h+=T(q[0],q[1]+5,v.n,'tacc','middle');
+      var j=(i+1)%3,k=(i+2)%3,mx=(P[j][0]+P[k][0])/2,my=(P[j][1]+P[k][1])/2,ox=mx-CX,oy=my-CY,l=Math.hypot(ox,oy)||1;
+      h+=T(mx+ox/l*14,my+oy/l*14+5,names[i],'tfg','middle');
+      var hv=$('.pv'+i,sv),hd=$('.handle[data-v="'+i+'"]',sv);hv.setAttribute('cx',P[i][0]);hv.setAttribute('cy',P[i][1]);hd.setAttribute('cx',P[i][0]);hd.setAttribute('cy',P[i][1]);});
+    dyn.innerHTML=h;
+    var t='<div class="tscroll"><table><thead><tr><th>Сторона</th><th>Угол</th><th>sin</th><th>Отношение</th></tr></thead><tbody>';
+    V.forEach(function(v,i){var sn=Math.sin(ang[i]);t+='<tr><td>'+names[i]+' = '+fmt(s[i])+'</td><td>'+v.n+' = '+fmt(ang[i]*180/Math.PI,1)+'°</td><td>'+fmt(sn,3)+'</td><td><b>'+fmt(s[i]/sn)+'</b></td></tr>';});
+    rd.innerHTML=t+'</tbody></table></div>';}
+  function move(i,d){d=norm(d);for(var j=0;j<3;j++)if(j!==i&&sep(d,V[j].d)<15)return;V[i].d=d;render();}
+  $$('.handle',sv).forEach(function(h){var i=+h.getAttribute('data-v'),drag=false;
+    h.addEventListener('pointerdown',function(e){drag=true;try{h.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault();h.focus&&h.focus();});
+    h.addEventListener('pointermove',function(e){if(!drag)return;var b=sv.getBoundingClientRect(),mx=(e.clientX-b.left)*400/b.width-CX,my=CY-(e.clientY-b.top)*340/b.height;move(i,Math.atan2(my,mx)*180/Math.PI);});
+    ['pointerup','pointercancel'].forEach(function(n){h.addEventListener(n,function(){drag=false})});
+    h.addEventListener('keydown',function(e){if(e.key==='ArrowLeft'||e.key==='ArrowDown'){move(i,V[i].d-3);e.preventDefault();}else if(e.key==='ArrowRight'||e.key==='ArrowUp'){move(i,V[i].d+3);e.preventDefault();}});
+  });
+  render();
+})();
+
+/* ---- Задачи ---- */
+var q12=fr(1,2),s2=fr('√2',2),s3=fr('√3',2);
+var TASKS={
+ s1:[
+  {q:'В треугольнике ABC угол C прямой, BC = 3, AC = 4, AB = 5. Найди <span class="s">sin A</span>.',a:'3/5',h:'Какая сторона лежит напротив угла A?',s:'Напротив угла A лежит BC. sin A = '+fr('BC','AB')+' = '+fr(3,5)+' = 0,6.'},
+  {q:'В том же треугольнике найди <span class="c">cos A</span>.',a:'4/5',h:'Рядом с углом A лежит катет AC.',s:'cos A = '+fr('AC','AB')+' = '+fr(4,5)+' = 0,8.'},
+  {q:'В том же треугольнике найди <span class="s">sin B</span>. С чем он совпал?',a:'4/5',h:'Теперь смотрим от вершины B. Какой катет напротив неё?',s:'Напротив угла B лежит AC, поэтому sin B = '+fr(4,5)+'. Это равно cos A: катет, прилежащий к углу A, противолежит углу B.'},
+  {q:'Гипотенуза равна 10, sin α = 0,6. Найди катет напротив угла α.',a:'6',h:'Катет = гипотенуза · sin α.',s:'10 · 0,6 = 6.'}],
+ s2:[
+  {q:'Вычисли: sin 30° + cos 60°.',a:'1',h:'Посмотри оба значения в таблице.',s:q12+' + '+q12+' = 1.'},
+  {q:'Гипотенуза равна 8, острый угол равен 30°. Найди катет напротив этого угла.',a:'4',h:'sin 30° = ½.',s:'8 · '+q12+' = 4. Запомни: катет напротив угла 30° равен половине гипотенузы.'},
+  {q:'Лестница длиной 6 м стоит под углом 60° к земле. На какой высоте её верхний конец? Можно записать через корень.',a:'3√3',h:'Высота это катет напротив угла 60°.',s:'h = 6 · sin 60° = 6 · '+s3+' = 3√3 ≈ 5,2 м.'},
+  {q:'Вычисли: √2 · cos 45°.',a:'1',h:'cos 45° = √2/2.',s:'√2 · '+s2+' = '+fr(2,2)+' = 1.'}],
+ s3:[
+  {q:'Чему равен <span class="c">cos 180°</span>? Найди точку на рисунке.',a:'-1',h:'Где находится точка при 180°? Какая у неё координата x?',s:'Точка стоит в крайнем левом положении (−1; 0). Значит, cos 180° = −1.'},
+  {q:'Чему равен <span class="s">sin 270°</span>?',a:'-1',h:'При 270° точка находится в самом низу.',s:'Точка (0; −1), поэтому sin 270° = −1.'},
+  {q:'Какой знак у <span class="c">cos 200°</span>?',o:['плюс','минус','это ноль'],c:1,s:'200° лежит в III четверти, там x < 0.'},
+  {q:'Какой знак у <span class="s">sin 300°</span>?',o:['плюс','минус','это ноль'],c:1,s:'300° лежит в IV четверти, там y < 0.'},
+  {q:'Вычисли <span class="s">sin 150°</span> теми же четырьмя действиями.',a:'1/2',h:'II четверть, острый угол 180° − 150°.',s:'Острый угол 30°, поэтому модуль равен sin 30° = '+q12+'. Точка выше оси x, знак плюс: sin 150° = '+q12+'.'},
+  {q:'Вычисли <span class="c">cos 135°</span>.',a:'-√2/2',h:'II четверть, острый угол 180° − 135°.',s:'Острый угол 45°, модуль равен cos 45° = '+s2+'. Точка левее оси y, знак минус: cos 135° = −'+s2+'.'},
+  {q:'Вычисли <span class="s">sin 210°</span>.',a:'-1/2',h:'III четверть, острый угол 210° − 180°.',s:'Острый угол 30°, модуль равен sin 30° = '+q12+'. Точка ниже оси x, знак минус: sin 210° = −'+q12+'.'},
+  {q:'Вычисли <span class="c">cos 300°</span>.',a:'1/2',h:'IV четверть, острый угол 360° − 300°.',s:'Острый угол 60°, модуль равен cos 60° = '+q12+'. Точка правее оси y, знак плюс: cos 300° = '+q12+'.'}],
+ s4:[
+  {q:'cos α = 0,6, угол α острый. Найди <span class="s">sin α</span>.',a:'0.8',h:'sin²α = 1 − cos²α.',s:'sin²α = 1 − 0,36 = 0,64. Угол острый, sin α > 0, поэтому sin α = 0,8.'},
+  {q:'sin α = '+fr(5,13)+', угол α тупой. Найди <span class="c">cos α</span>.',a:'-12/13',h:'После корня не забудь выбрать знак. Где лежит тупой угол?',s:'cos²α = 1 − '+fr(25,169)+' = '+fr(144,169)+'. Тупой угол лежит во II четверти, косинус отрицателен: −'+fr(12,13)+'.'},
+  {q:'Найди <span class="c">cos 150°</span>.',a:'-√3/2',h:'cos(180° − α) = −cos α.',s:'cos 150° = cos(180° − 30°) = −cos 30° = −'+s3+'.'},
+  {q:'Найди <span class="s">sin 135°</span>.',a:'√2/2',h:'sin(180° − α) = sin α.',s:'sin 135° = sin 45° = '+s2+'.'}],
+ s5:[
+  {q:'Переведи 120° в радианы.',a:'2π/3',pi:1,h:'Умножь на π/180 и сократи.',s:fr('120π',180)+' = '+fr('2π',3)+'.'},
+  {q:'Переведи '+fr('3π',4)+' в градусы.',a:'135',h:'Подставь вместо π число 180°.',s:fr('3 · 180°',4)+' = 135°.'},
+  {q:'Найди <span class="s">sin</span> '+fr('π',6)+'.',a:'1/2',h:'Сначала переведи угол в градусы.',s:fr('π',6)+' = 30°, sin 30° = '+q12+'.'},
+  {q:'Найди <span class="s">sin 390°</span>.',a:'1/2',h:'Сделай один полный оборот назад.',s:'390° = 360° + 30°, поэтому sin 390° = sin 30° = '+q12+'.'}],
+ s6:[
+  {q:'Два пешехода вышли из одной точки по прямым дорогам, угол между дорогами 60°. Один прошёл 3 км, другой 8 км. Сколько километров между ними?',a:'7',h:'Третья сторона треугольника, две стороны и угол между ними известны.',s:'a² = 9 + 64 − 2·3·8·'+q12+' = 73 − 24 = 49, значит a = 7 км.'},
+  {q:'b = 7, c = 8, A = 120°. Найди a.',a:'13',h:'cos 120° = −½. Минус на минус даёт плюс.',s:'a² = 49 + 64 + 2·7·8·'+q12+' = 113 + 56 = 169, значит a = 13.'},
+  {q:'Стороны треугольника равны 5, 7 и 8. Найди в градусах угол, лежащий напротив стороны 7.',a:'60',h:'cos A = (b² + c² − a²) / 2bc, где a = 7.',s:'cos A = '+fr('25 + 64 − 49','2·5·8')+' = '+fr(40,80)+' = '+q12+', значит угол равен 60°.'}],
+ s7:[
+  {q:'a = 10, A = 30°, B = 45°. Найди b.',a:'10√2',h:'b = a · sin B / sin A.',s:'b = 10 · '+s2+' : '+q12+' = 10√2 ≈ 14,14.'},
+  {q:'В треугольнике a = 12, A = 30°. Найди радиус описанной окружности R.',a:'12',h:'2R = a / sin A.',s:'2R = 12 : '+q12+' = 24, значит R = 12.'},
+  {q:'Известны все три стороны, нужен угол. Какая теорема подходит?',o:['теорема косинусов','теорема синусов','теорема Пифагора'],c:0,s:'Углов мы не знаем, поэтому отношения из теоремы синусов не составить. Теорема косинусов выражает угол через три стороны.'},
+  {q:'Стороны a = 6 и b = 8, угол между ними C = 30°. Найди площадь треугольника.',a:'12',h:'S = ½ · a · b · sin C.',s:'S = '+q12+' · 6 · 8 · '+q12+' = 12.'}],
+ final:[
+  {q:'<b>1.</b> Найди sin 120°.',a:'√3/2',h:'Шаг 4',s:'sin 120° = sin 60° = '+s3+'.'},
+  {q:'<b>2.</b> Найди cos 135°.',a:'-√2/2',h:'Шаг 4',s:'cos 135° = −cos 45° = −'+s2+'.'},
+  {q:'<b>3.</b> sin α = 0,8, угол α тупой. Найди cos α.',a:'-0.6',h:'Шаг 4',s:'cos²α = 1 − 0,64 = 0,36. Угол тупой, значит cos α = −0,6.'},
+  {q:'<b>4.</b> Вычисли: sin²40° + cos²40°.',a:'1',h:'Шаг 4',s:'Для любого угла эта сумма равна 1.'},
+  {q:'<b>5.</b> Переведи 5π/6 в градусы.',a:'150',h:'Шаг 5',s:fr('5 · 180°',6)+' = 150°.'},
+  {q:'<b>6.</b> b = 4, c = 6, A = 60°. Найди a.',a:'2√7',h:'Шаг 6',s:'a² = 16 + 36 − 2·4·6·'+q12+' = 52 − 24 = 28, значит a = √28 = 2√7 ≈ 5,29.'},
+  {q:'<b>7.</b> Стороны треугольника 3, 5 и 7. Найди в градусах наибольший угол.',a:'120',h:'Шаг 6. Наибольший угол лежит напротив наибольшей стороны.',s:'cos A = '+fr('9 + 25 − 49','2·3·5')+' = −'+fr(15,30)+' = −'+q12+', значит угол равен 120°.'},
+  {q:'<b>8.</b> a = 8, A = 45°, B = 30°. Найди b.',a:'4√2',h:'Шаг 7',s:'b = 8 · '+q12+' : '+s2+' = '+fr(8,'√2')+' = 4√2 ≈ 5,66.'}]
+};
+$$('.tasks[data-set]').forEach(function(box){
+  var set=box.getAttribute('data-set'),list=TASKS[set],hd=document.createElement('p');
+  hd.className='tasks-h';hd.textContent=set==='final'?'Контрольная':'Проверь себя';box.appendChild(hd);
+  list.forEach(function(t,n){
+    var el=document.createElement('div'),id='task-'+set+'-'+n,sol='<details><summary>Решение</summary><div>'+t.s+'</div></details>',
+      hint=t.h?'<details><summary>Подсказка</summary><div>'+t.h+'</div></details>':'';
+    el.className='task';
+    if(t.o){
+      el.innerHTML='<p class="q">'+t.q+'</p><div class="opts">'+t.o.map(function(o,i){return '<button type="button" class="btn ghost opt" data-i="'+i+'">'+o+'</button>'}).join('')+'</div><p class="fb" role="status"></p><div class="dets">'+sol+'</div>';
+      $$('.opt',el).forEach(function(b){b.addEventListener('click',function(){var i=+b.getAttribute('data-i'),fb=$('.fb',el);
+        if(i===t.c){b.classList.add('right');fb.className='fb ok';fb.textContent='Верно.';}
+        else{b.classList.add('wrong');fb.className='fb no';fb.textContent='Пока нет. Подумай ещё.';}});});
+    }else{
+      el.innerHTML='<p class="q">'+t.q+'</p><form class="ans" autocomplete="off"><input id="'+id+'" type="text" aria-label="Твой ответ" placeholder="ответ"><button type="button" class="btn ghost ins" data-ins="√" aria-label="Вставить корень">√</button>'+(t.pi?'<button type="button" class="btn ghost ins" data-ins="π" aria-label="Вставить пи">π</button>':'')+'<button class="btn" type="submit">Проверить</button></form><p class="fb" role="status"></p><div class="dets">'+hint+sol+'</div>';
+      var inp=$('input',el),fb=$('.fb',el);
+      $$('.ins',el).forEach(function(b){b.addEventListener('click',function(){inp.value+=b.getAttribute('data-ins');inp.focus();});});
+      $('form',el).addEventListener('submit',function(e){e.preventDefault();
+        var v=parseNum(inp.value),a=parseNum(t.a),tol=Math.max(.008,.006*Math.abs(a));
+        if(v===null){fb.className='fb no';fb.textContent='Не получилось прочитать ответ. Запиши, например, так: 0,5 или 1/2 или √3/2.';return;}
+        if(Math.abs(v-a)<=tol){fb.className='fb ok';fb.textContent='Верно.';}
+        else if(a!==0&&Math.abs(v+a)<=tol){fb.className='fb no';fb.textContent='Число верное, а знак нет. В какой четверти точка?';}
+        else{fb.className='fb no';fb.textContent='Пока нет. Попробуй подсказку.';}
+      });
+    }
+    box.appendChild(el);
+  });
+});
+
+/* ---- Тренажёр ---- */
+(function(){
+  var box=$('#drill-box'),ANG=[0,30,45,60,90,120,135,150,180,210,225,240,270,300,315,330],lim=180,ok=0,total=0,streak=0,cur=null;
+  box.innerHTML='<div class="ctrls" role="group" aria-label="Диапазон углов"><span class="figcap">Углы:</span>'
+    +[[90,'0–90°'],[180,'0–180°'],[360,'0–360°']].map(function(r){return '<button type="button" class="btn ghost rng" data-lim="'+r[0]+'">'+r[1]+'</button>'}).join('')
+    +'<span class="figcap" id="drill-score" aria-live="polite"></span></div><div class="ask m"></div><div class="opts"></div><div class="res"></div>';
+  var ask=$('.ask',box),opts=$('.opts',box),res=$('.res',box),sc=$('#drill-score');
+  function mini(d){var C=46,R=38,p=pt(C,C,R,d);return '<svg viewBox="0 0 92 92" aria-hidden="true">'+L(4,C,88,C,'var(--muted)')+L(C,4,C,88,'var(--muted)')+'<circle cx="46" cy="46" r="38" fill="none" stroke="var(--fg)"/>'+L(C,C,p[0],C,'var(--cos)',3)+L(p[0],C,p[0],p[1],'var(--sin)',3)+'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="var(--accent)"/></svg>';}
+  function score(){sc.textContent=total?('верно '+ok+' из '+total+(streak>2?', подряд '+streak:'')):'';}
+  function next(){
+    var pool=ANG.filter(function(a){return a<=lim}),d;
+    do{d=pool[Math.floor(Math.random()*pool.length)];}while(cur&&d===cur.d&&pool.length>1);
+    var fn=Math.random()<.5?'sin':'cos',ans=kOf(d,fn);cur={d:d,fn:fn};
+    ask.innerHTML='<span class="'+(fn==='sin'?'s':'c')+'">'+fn+' '+d+'°</span> = ?';
+    var list=[];if(lim>90||ans.neg)for(var k=4;k>=1;k--)list.push({k:k,neg:true});for(var k2=0;k2<=4;k2++)list.push({k:k2,neg:false});
+    opts.innerHTML=list.map(function(v,i){return '<button type="button" class="btn ghost opt" data-i="'+i+'">'+(v.neg?'−':'')+VAL[v.k]+'</button>'}).join('');
+    res.innerHTML='';
+    var done=false;
+    $$('.opt',opts).forEach(function(b){b.addEventListener('click',function(){if(done)return;done=true;
+      var v=list[+b.getAttribute('data-i')],right=v.k===ans.k&&(v.neg===ans.neg||v.k===0);total++;
+      if(right){ok++;streak++;b.classList.add('right');}else{streak=0;b.classList.add('wrong');
+        $$('.opt',opts).forEach(function(x){var w=list[+x.getAttribute('data-i')];if(w.k===ans.k&&(w.neg===ans.neg||w.k===0))x.classList.add('right');});}
+      score();
+      var ref=d<=90?d:d<=180?180-d:d<=270?d-180:360-d,q=d%90===0?0:Math.ceil(d/90),txt;
+      if(!q)txt='Точка лежит на оси. Смотри её координаты на рисунке.';
+      else if(d<90)txt='Угол острый: значение берём прямо из таблицы.';
+      else txt='До горизонтальной оси здесь '+ref+'°, значит модуль как у '+fn+' '+ref+'°. Четверть '+['','I','II','III','IV'][q]+' определяет знак.';
+      res.innerHTML=mini(d)+'<p>'+(right?'<b style="color:var(--ok)">Верно.</b> ':'<b style="color:var(--bad)">Правильно: '+(ans.neg?'−':'')+VAL[ans.k]+'.</b> ')+txt+'</p><button type="button" class="btn" id="drill-next">Дальше</button>';
+      var nb=$('#drill-next');nb.addEventListener('click',next);nb.focus({preventScroll:true});
+    });});
+  }
+  function mark(){$$('.rng',box).forEach(function(b){var a=+b.getAttribute('data-lim')===lim;b.classList.toggle('ghost',!a);b.setAttribute('aria-pressed',a);});}
+  $$('.rng',box).forEach(function(b){b.addEventListener('click',function(){lim=+b.getAttribute('data-lim');ok=total=streak=0;cur=null;score();mark();next();});});
+  mark();next();
+})();
+
+/* ---- Заметки и прогресс ---- */
+(function(){
+  var nt=$('#notes-on');
+  function ap(){document.body.classList.toggle('no-notes',!nt.checked)}
+  if(store.get('sincos-notes')==='0')nt.checked=false;
+  ap();nt.addEventListener('change',function(){store.set('sincos-notes',nt.checked?'1':'0');ap();});
+  var done={};try{done=JSON.parse(store.get('sincos-done')||'{}')||{}}catch(e){}
+  $$('[data-done]').forEach(function(c){var n=c.getAttribute('data-done'),a=$('[data-nav="'+n+'"]');
+    c.checked=!!done[n];a.classList.toggle('isdone',c.checked);
+    c.addEventListener('change',function(){done[n]=c.checked;store.set('sincos-done',JSON.stringify(done));a.classList.toggle('isdone',c.checked);});});
+})();
+})();
+</script>
+
+</html>

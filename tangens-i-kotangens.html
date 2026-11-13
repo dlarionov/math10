@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Тангенс и котангенс</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=Caveat:wght@600&family=Golos+Text:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: школьная тетрадь в клетку с красными полями справа (заметки родителю). В тёмной теме — школьная доска и цветной мел. */
+:root{
+  --bg:#f6f9fd; --grid:#e1eaf5; --surface:#ffffff; --soft:#eef1fa; --fg:#1a2444; --muted:#55607c; --line:#c3cfe0;
+  --sin:#c2264b; --cos:#135fbc; --accent:#4b36a6; --on-accent:#ffffff; --mirror:#0b7a73; --tan:#0b7a73; --ctg:#a35400;
+  --ok:#17784a; --bad:#b3261e; --pen:#ad2a22; --margin:#e4939c;
+  --display:"Bitter",Georgia,serif; --body:"Golos Text","Segoe UI",system-ui,sans-serif;
+  --math:"STIX Two Text","Cambria Math",Cambria,Georgia,serif; --hand:"Caveat","Segoe Print",cursive;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17261f; --grid:#1f3129; --surface:#1e3229; --soft:#263d33; --fg:#eff3e8; --muted:#adbcae; --line:#3e5549;
+  --sin:#ff9db0; --cos:#90cbff; --accent:#ffd977; --on-accent:#1b2a22; --mirror:#7fe3d6; --tan:#7fe3d6; --ctg:#ffb86b;
+  --ok:#8fe2ab; --bad:#ffb4a6; --pen:#ffb4a6; --margin:#80595d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17261f; --grid:#1f3129; --surface:#1e3229; --soft:#263d33; --fg:#eff3e8; --muted:#adbcae; --line:#3e5549;
+  --sin:#ff9db0; --cos:#90cbff; --accent:#ffd977; --on-accent:#1b2a22; --mirror:#7fe3d6; --tan:#7fe3d6; --ctg:#ffb86b;
+  --ok:#8fe2ab; --bad:#ffb4a6; --pen:#ffb4a6; --margin:#80595d; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;color:var(--fg);font:400 17px/1.6 var(--body);background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1100px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);line-height:1.2;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.4rem,7vw,4rem);font-weight:700}
+h2{font-size:clamp(1.55rem,3.6vw,2.1rem);font-weight:700}
+h3{font-size:1.2rem;font-weight:600;margin-top:1.6rem}
+p{margin:0}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* Математика */
+.m,.s,.c,.key,td.mt{font-family:var(--math)}
+.s{color:var(--sin);font-weight:600;white-space:nowrap}
+.c{color:var(--cos);font-weight:600;white-space:nowrap}
+.f{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.86em;line-height:1.18;margin-inline:.1em}
+.f b{font-weight:inherit;padding-inline:.25em}
+.f b:first-child{border-bottom:1px solid currentColor}
+.ov{border-top:1px solid currentColor;padding-inline:.1em}
+
+/* Шапка */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px 40px;align-items:center;padding-block:40px 28px}
+.hero .lead{font-size:1.2rem;max-width:40em;margin-top:14px}
+.hero .legend{color:var(--muted);margin-top:12px}
+.hero svg{width:210px;height:auto;display:block;background:var(--surface);border:1px solid var(--line)}
+@media (max-width:640px){.hero{grid-template-columns:minmax(0,1fr)}.hero svg{width:180px}}
+
+/* Навигация */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-block:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:12px;padding-block:6px}
+.steps{display:flex;gap:2px;overflow-x:auto;flex:1 1 auto;min-width:0;scrollbar-width:thin}
+.steps a{flex:none;padding:4px 10px;color:var(--fg);text-decoration:none;font-size:.88rem;border-radius:3px;white-space:nowrap}
+.steps a:hover{background:var(--soft)}
+.steps a.isdone{color:var(--ok)}
+.steps a.isdone::after{content:" ✓"}
+.notes-toggle{flex:none;font-size:.82rem;color:var(--muted);display:flex;gap:6px;align-items:center;white-space:nowrap}
+@media (max-width:560px){.notes-toggle span{display:none}.notes-toggle::after{content:"заметки"}}
+
+/* Шаги: основной столбец + поля */
+.step{display:grid;grid-template-columns:minmax(0,1fr) 240px;column-gap:28px;padding-block:44px;border-bottom:1px solid var(--line);scroll-margin-top:52px}
+.step>header{grid-column:1}
+.step>.note{grid-column:2;grid-row:1 / span 2;border-left:2px solid var(--margin);padding-left:16px;font-size:.88rem;line-height:1.5;color:var(--muted);display:grid;gap:10px;align-content:start}
+.step>.main{grid-column:1;min-width:0;display:grid;gap:16px;margin-top:16px}
+.main>*{min-width:0}
+.main>p,.main>ul,.main>ol{max-width:68ch;margin:0}
+.eyebrow{font-size:.82rem;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.note .who{font:600 1.35rem/1 var(--hand);color:var(--pen)}
+.note p b{color:var(--fg);font-weight:600}
+body.no-notes .note{display:none}
+body.no-notes .step{grid-template-columns:minmax(0,1fr)}
+@media (max-width:900px){
+  .step{grid-template-columns:minmax(0,1fr)}
+  .step>.note{grid-column:1;grid-row:auto;border-left:0;border-block:1px dashed var(--margin);padding:10px 0;margin-top:14px}
+}
+
+.key{background:var(--soft);padding:12px 16px;font-size:1.14rem;display:flex;flex-wrap:wrap;gap:8px 36px;align-items:center}
+.key .big{font-size:1.25rem}
+ul.plain,ol.plain{padding-left:1.3em;display:grid;gap:6px}
+
+/* Рисунки */
+.fig{background:var(--surface);border:1px solid var(--line);padding:14px;display:grid;gap:12px}
+.fig figcaption,.figcap{font-size:.88rem;color:var(--muted)}
+figure{margin:0}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.draw{flex:1 1 300px;min-width:0;max-width:420px}
+.draw svg,.graph svg{display:block;width:100%;height:auto;max-width:100%}
+.graph{max-width:640px}
+.read{flex:1 1 240px;min-width:0;display:grid;gap:6px;font-family:var(--math);font-size:1.08rem;font-variant-numeric:tabular-nums}
+.read .ln{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;min-height:2.1em}
+.read .tag{font-family:var(--body);font-size:.8rem;color:var(--muted)}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+.ctrls label{display:flex;align-items:center;gap:8px;font-size:.92rem}
+.ctrls label.sl{flex:1 1 220px;min-width:0}
+.ctrls input[type=range]{flex:1;min-width:80px;accent-color:var(--accent)}
+input[type=checkbox]{accent-color:var(--accent)}
+.lb{font:600 15px var(--math)}
+.tfg{fill:var(--fg)}.tmut{fill:var(--muted)}.tsin{fill:var(--sin)}.tcos{fill:var(--cos)}.tacc{fill:var(--accent)}.tmir{fill:var(--mirror)}
+.small{font:400 12px var(--body)}
+.tick{cursor:pointer}
+.handle{fill:transparent;pointer-events:all;cursor:grab;touch-action:none}
+.handle:active{cursor:grabbing}
+
+/* Таблицы */
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;background:var(--surface);font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:center}
+th{font-weight:600;background:var(--soft)}
+td.lf,th.lf{text-align:left}
+.vals td,.vals th{min-width:52px;font-family:var(--math);font-size:1.05rem}
+
+/* Задачи */
+.tasks{display:grid;gap:12px}
+.tasks-h{font-family:var(--display);font-weight:600;font-size:1.15rem;margin-top:8px}
+.task{background:var(--surface);border:1px solid var(--line);padding:12px 14px;display:grid;gap:8px}
+.task .q{max-width:66ch}
+.ans{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ans input{font:400 1.05rem var(--math);width:9.5em;max-width:100%;padding:6px 8px;background:var(--bg);color:var(--fg);border:1px solid var(--muted);border-radius:3px}
+.btn{font:500 .92rem var(--body);padding:7px 12px;background:var(--accent);color:var(--on-accent);border:1px solid var(--accent);border-radius:3px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--line)}
+.btn.ghost:hover{background:var(--soft)}
+.fb{min-height:1.5em;font-size:.95rem;font-weight:500}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--bad)}
+details{font-size:.95rem}
+details summary{cursor:pointer;color:var(--muted);width:fit-content}
+details>div{padding:6px 0 2px;font-family:var(--body)}
+.dets{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:flex-start}
+.dets details{flex:1 1 100%}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opt.right{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.opt.wrong{border-color:var(--bad);color:var(--bad)}
+.done{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.92rem}
+
+/* Тренажёр */
+.drill{background:var(--surface);border:1px solid var(--line);padding:16px;display:grid;gap:12px}
+.drill .ask{font:600 2rem var(--math)}
+.drill .opts .btn{min-width:62px;min-height:48px;font:400 1.1rem var(--math)}
+.drill .res{display:flex;flex-wrap:wrap;gap:14px;align-items:center;min-height:96px}
+.drill .res svg{width:92px;height:92px;flex:none}
+.drill .res p{flex:1 1 220px;min-width:0}
+
+.sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px}
+.sheet>div{background:var(--surface);border:1px solid var(--line);padding:12px 14px;font-family:var(--math);display:grid;gap:6px;align-content:start}
+.sheet h3{margin:0 0 4px;font-size:1rem}
+.foot{padding-block:28px 48px;color:var(--muted);font-size:.9rem}
+.t{color:var(--tan);font-weight:600;white-space:nowrap;font-family:var(--math)}
+.g{color:var(--ctg);font-weight:600;white-space:nowrap;font-family:var(--math)}
+.ttan{fill:var(--tan)}.tctg{fill:var(--ctg)}
+.quick{display:flex;flex-wrap:wrap;gap:4px}
+.quick .btn{padding:3px 7px;font-size:.8rem}
+</style>
+
+<div class="wrap">
+  <p style="padding-top:18px"><a href="index.html">← Все уроки</a></p>
+  <div class="hero">
+    <div>
+      <h1>Тангенс и котангенс</h1>
+      <p class="lead">Синус и косинус связывают наклонную сторону с катетами. Тангенс связывает сами катеты: сколько вверх на каждый шаг вперёд. Поэтому он и есть мера крутизны.</p>
+      <p class="legend">Цвета те же, что в прошлом уроке: <span class="c">косинус</span> синий, <span class="s">синус</span> красный. Новые: <span class="t">тангенс</span> бирюзовый, <span class="g">котангенс</span> оранжевый.</p>
+    </div>
+    <svg id="hero-svg" viewBox="0 0 200 200" role="img" aria-label="Луч вращается, его пересечение с вертикальной линией показывает тангенс"></svg>
+  </div>
+</div>
+
+<nav class="topbar" aria-label="Шаги урока">
+  <div class="wrap">
+    <div class="steps">
+      <a href="#start">С чего начать</a>
+      <a href="#step-1" data-nav="1">1 Зачем</a>
+      <a href="#step-2" data-nav="2">2 Треугольник</a>
+      <a href="#step-3" data-nav="3">3 Связь с sin и cos</a>
+      <a href="#step-4" data-nav="4">4 Любые углы</a>
+      <a href="#step-5" data-nav="5">5 Контрольная</a>
+      <a href="#cheat">Шпаргалка</a>
+    </div>
+    <label class="notes-toggle"><input type="checkbox" id="notes-on" checked> <span>заметки родителю</span></label>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<section class="step" id="start">
+  <header>
+    <p class="eyebrow">Перед началом · 3 минуты</p>
+    <h2>С чего начать</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p>Текст шагов обращён к учащимся, заметки на этих полях к вам. Галочка наверху их скрывает.</p>
+    <p>Весь урок занимает около 55 минут. Его удобно разбить на два занятия: шаги 1–3 и шаги 4–5. Время примерное.</p>
+  </aside>
+  <div class="main">
+    <p>Этот урок опирается на прошлый. Спросите устно. Если вопрос вызывает затруднения, сначала вернитесь к <a href="sinus-i-kosinus.html">уроку про синус и косинус</a>.</p>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th class="lf">Вопрос</th><th class="lf">Хороший ответ</th></tr></thead>
+        <tbody>
+          <tr><td class="lf">Что такое sin α и cos α в прямоугольном треугольнике?</td><td class="lf">Противолежащий и прилежащий катеты, делённые на гипотенузу</td></tr>
+          <tr><td class="lf">Чему равны sin 30° и cos 30°?</td><td class="lf m"><span class="f"><b>1</b><b>2</b></span> и <span class="f"><b>√3</b><b>2</b></span></td></tr>
+          <tr><td class="lf">Как найти cos 120°?</td><td class="lf">Острый угол 60°, точка левее оси y, поэтому −½</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>Как вести.</b> Как и в прошлый раз: рисунками управляет она. Сначала предсказание, потом проверка.</p>
+  </div>
+</section>
+
+<section class="step" id="step-1">
+  <header>
+    <p class="eyebrow">Шаг 1 · около 5 минут</p>
+    <h2>Зачем нужен тангенс</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>Начните с дерева.</b> Спросите: «Какую длину ты можешь измерить рулеткой, а какую нет?» Это и есть причина, зачем нужен тангенс.</p>
+    <p><b>Спросите:</b> «Что значит знак на дороге: уклон 12%?» Ответ появится на следующем шаге.</p>
+  </aside>
+  <div class="main">
+    <div class="row">
+      <svg viewBox="0 0 260 175" role="img" aria-label="Наблюдатель в 20 метрах от дерева видит вершину под углом 35 градусов" style="flex:0 1 260px;min-width:0;height:auto;background:var(--surface);border:1px solid var(--line)">
+        <path d="M10 150H250" stroke="var(--muted)" stroke-width="2" fill="none"/>
+        <path d="M30 150H210" stroke="var(--cos)" stroke-width="4" fill="none"/>
+        <path d="M210 150V24" stroke="var(--sin)" stroke-width="4" fill="none"/>
+        <circle cx="210" cy="36" r="24" fill="none" stroke="var(--tan)" stroke-width="2"/>
+        <path d="M30 150L210 24" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="6 5" fill="none"/>
+        <path d="M66 150A36 36 0 0 0 59.5 129.4" stroke="var(--accent)" stroke-width="2" fill="none"/>
+        <text class="lb tacc" x="72" y="143">35°</text>
+        <text class="lb tcos" x="120" y="169" text-anchor="middle">20 м</text>
+        <text class="lb tsin" x="202" y="100" text-anchor="end">? м</text>
+      </svg>
+      <div style="flex:1 1 280px;min-width:0;display:grid;gap:10px">
+        <p><b>Задача.</b> Нужно узнать высоту дерева. Ты отошла на 20 м, и вершина видна под углом 35°. Считаем от уровня земли.</p>
+        <p>С синусом не получится: нужна наклонная линия до вершины, а её рулеткой не измерить. Зато расстояние по земле измерить легко. Нужна величина, которая связывает два катета.</p>
+      </div>
+    </div>
+    <div class="key"><span class="big"><span class="t">tg α</span> = сколько вверх на каждый шаг вперёд</span></div>
+    <p>Калькулятор даёт tg 35° ≈ 0,7. На каждый метр вперёд вершина выше на 0,7 м, поэтому высота ≈ 20 · 0,7 = 14 м.</p>
+    <h3>Где это встречается</h3>
+    <ul class="plain">
+      <li><b>Дороги и пандусы.</b> Уклон на дорожном знаке это тангенс в процентах.</li>
+      <li><b>Физика.</b> Тело на наклонной плоскости начинает скользить, когда тангенс угла наклона достигает коэффициента трения.</li>
+      <li><b>Алгебра.</b> В уравнении прямой y = kx число k это тангенс угла её наклона. В 11 классе так же объясняется смысл производной: это тангенс наклона касательной.</li>
+    </ul>
+    <p>Котангенс это тот же вопрос наоборот: сколько шагов вперёд приходится на каждый метр вверх. Для пандуса 1:12 получаем <span class="t">tg α</span> = <span class="f m"><b>1</b><b>12</b></span> и <span class="g">ctg α</span> = 12.</p>
+    <label class="done"><input type="checkbox" id="done-1" data-done="1"> Шаг пройден</label>
+  </div>
+</section>
+
+<section class="step" id="step-2">
+  <header>
+    <p class="eyebrow">Шаг 2 · около 10 минут</p>
+    <h2>Определение в прямоугольном треугольнике</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>Главное отличие от синуса:</b> тангенс может быть больше 1. Спросите почему. Катет бывает длиннее другого катета, а длиннее гипотенузы не бывает.</p>
+    <p><b>Если путает дроби:</b> в тангенсе наверху катет, который лежит напротив угла, как и в синусе. Котангенс получается переворотом дроби.</p>
+    <p><b>Удивительный факт:</b> уклон 100% это всего лишь 45°. Спросите, что она ожидала.</p>
+  </aside>
+  <div class="main">
+    <div class="key">
+      <span><span class="t">tg α</span> = <span class="f"><b>противолежащий катет</b><b>прилежащий катет</b></span></span>
+      <span><span class="g">ctg α</span> = <span class="f"><b>прилежащий катет</b><b>противолежащий катет</b></span></span>
+    </div>
+    <p>Причина та же, что у синуса: все прямоугольные треугольники с углом α подобны. Поэтому отношение катетов зависит только от угла.</p>
+    <figure class="fig">
+      <div class="row">
+        <div class="draw"><svg id="t2-svg" viewBox="0 0 340 300" role="img" aria-label="Прямоугольный треугольник с настраиваемым углом и размером"></svg></div>
+        <div class="read" id="t2-read"></div>
+      </div>
+      <div class="ctrls">
+        <label class="sl">Угол α <input type="range" id="t2-angle" min="5" max="85" value="35"></label>
+        <label class="sl">Размер <input type="range" id="t2-size" min="2" max="10" step="0.5" value="8"></label>
+      </div>
+    </figure>
+    <ol class="plain">
+      <li>Двигай «размер». Катеты меняются, тангенс стоит на месте.</li>
+      <li>Поставь 45°. Катеты равны, поэтому tg 45° = ctg 45° = 1. Это и есть уклон 100%.</li>
+      <li>Поставь 85°. Тангенс стал больше 11. Почему у синуса так не бывает?</li>
+      <li>Сравни tg и ctg при разных углах. Как они связаны?</li>
+    </ol>
+    <div class="tasks" data-set="s2"></div>
+    <label class="done"><input type="checkbox" id="done-2" data-done="2"> Шаг пройден</label>
+  </div>
+</section>
+
+<section class="step" id="step-3">
+  <header>
+    <p class="eyebrow">Шаг 3 · около 10 минут</p>
+    <h2>Как тангенс связан с синусом и косинусом</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>Попросите вывести</b> tg 30° самостоятельно через синус и косинус. Так таблицу можно восстановить без заучивания.</p>
+    <p><b>Частый вопрос:</b> «Почему √3/3, а в другой книге 1/√3?» Это одно и то же число. Просто в школе принято убирать корень из знаменателя.</p>
+  </aside>
+  <div class="main">
+    <p>В синусе и косинусе знаменатель один и тот же: гипотенуза. При делении друг на друга она сокращается, и остаётся отношение катетов.</p>
+    <div class="key">
+      <span class="big"><span class="t">tg α</span> = <span class="f"><b>sin α</b><b>cos α</b></span></span>
+      <span class="big"><span class="g">ctg α</span> = <span class="f"><b>cos α</b><b>sin α</b></span></span>
+    </div>
+    <p>Отсюда сразу ещё две связи. Эти дроби перевёрнуты, поэтому их произведение равно 1. Катет, противолежащий одному острому углу, прилежит к другому, поэтому котангенс одного угла равен тангенсу другого.</p>
+    <div class="key">
+      <span><span class="t">tg α</span> · <span class="g">ctg α</span> = 1</span>
+      <span><span class="g">ctg α</span> = tg(90° − α)</span>
+    </div>
+    <h3>Таблица значений</h3>
+    <p>Выведем tg 30°: <span class="m"><span class="f"><b>1/2</b><b>√3/2</b></span> = <span class="f"><b>1</b><b>√3</b></span> = <span class="f"><b>√3</b><b>3</b></span></span>. Остальные получаются так же.</p>
+    <div class="tscroll"><table class="vals" data-vals="0,30,45,60,90"></table></div>
+    <p>Легко запомнить: у тангенса в середине 1, по краям <span class="m"><span class="f"><b>√3</b><b>3</b></span></span> и √3, и он растёт вместе с углом. Котангенс идёт в обратном порядке. При 90° косинус равен 0, а делить на 0 нельзя, поэтому tg 90° не существует. То же с ctg 0°.</p>
+    <h3>Ещё две формулы</h3>
+    <p>Разделим sin²α + cos²α = 1 на cos²α, а затем на sin²α:</p>
+    <div class="key">
+      <span>1 + tg²α = <span class="f"><b>1</b><b>cos²α</b></span></span>
+      <span>1 + ctg²α = <span class="f"><b>1</b><b>sin²α</b></span></span>
+    </div>
+    <p><b>Разбор.</b> Дано tg α = 2, угол α острый. Найти cos α.</p>
+    <p class="m"><span class="f"><b>1</b><b>cos²α</b></span> = 1 + 4 = 5, значит cos²α = <span class="f"><b>1</b><b>5</b></span>. Угол острый, поэтому cos α = <span class="f"><b>1</b><b>√5</b></span> = <span class="f"><b>√5</b><b>5</b></span> ≈ 0,45.</p>
+    <div class="tasks" data-set="s3"></div>
+    <label class="done"><input type="checkbox" id="done-3" data-done="3"> Шаг пройден</label>
+  </div>
+</section>
+
+<section class="step" id="step-4">
+  <header>
+    <p class="eyebrow">Шаг 4 · около 20 минут</p>
+    <h2>Окружность: тангенс и котангенс любого угла</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>Самое важное здесь:</b> у тангенса период 180°, а у синуса 360°. Покажите на рисунке 30° и 210°: луч лежит на одной прямой.</p>
+    <p><b>Спросите перед движением:</b> «Что будет с тангенсом, когда угол подойдёт к 90°? А когда перейдёт через него?»</p>
+    <p><b>Откуда название:</b> tangens по-латыни значит «касающийся». Вертикальная линия как раз касается окружности.</p>
+    <p>Если линии на окружности в школе не проходили, главное здесь это формула tg α = sin α / cos α и знаки.</p>
+  </aside>
+  <div class="main">
+    <p>В прошлом уроке синус и косинус стали координатами точки. Тангенс тоже можно увидеть. Возьмём прямоугольный треугольник, у которого прилежащий катет равен 1. Тогда <span class="t">tg α</span> = <span class="f m"><b>катет</b><b>1</b></span>, то есть тангенс просто равен второму катету.</p>
+    <p>Проведём вертикальную линию x = 1, которая касается окружности. Продолжим луч угла до пересечения с ней. Высота точки пересечения и есть тангенс. Аналогично на горизонтальной линии y = 1 читается котангенс.</p>
+    <div class="key">
+      <span><span class="t">tg α</span> = y точки на линии x = 1</span>
+      <span><span class="g">ctg α</span> = x точки на линии y = 1</span>
+    </div>
+    <figure class="fig">
+      <div id="c4"></div>
+      <div class="graph"><svg id="g4" viewBox="0 0 480 212" role="img" aria-label="Графики тангенса и котангенса от 0 до 360 градусов"></svg></div>
+    </figure>
+    <ol class="plain">
+      <li>Поставь 45°. Прямая угла пересекает обе линии в одной точке (1; 1).</li>
+      <li>Веди точку к 90°. Тангенс растёт без предела. При 90° луч параллелен линии, пересечения нет, и тангенса тоже нет.</li>
+      <li>Поставь 30°, затем 210°. Луч лежит на той же прямой, тангенс тот же. Значит, период равен 180°.</li>
+      <li>Посмотри на график: на каждом участке тангенс растёт, а котангенс убывает.</li>
+    </ol>
+    <h3>Как вычислить tg 120°</h3>
+    <p>Порядок действий знаком по косинусу и синусу:</p>
+    <ol class="plain">
+      <li><b>Найди четверть.</b> 120° лежит во II четверти.</li>
+      <li><b>Найди острый угол.</b> 180° − 120° = 60°.</li>
+      <li><b>Возьми значение из таблицы.</b> tg 60° = √3.</li>
+      <li><b>Поставь знак.</b> Во II четверти sin &gt; 0, а cos &lt; 0. Плюс делить на минус даёт минус.</li>
+    </ol>
+    <div class="key"><span><span class="t">tg 120°</span> = −√3</span><span><span class="g">ctg 120°</span> = −<span class="f"><b>√3</b><b>3</b></span></span></div>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Четверть</th><th>sin</th><th>cos</th><th>tg и ctg</th><th class="lf">Пример</th></tr></thead>
+        <tbody>
+          <tr><td>I</td><td>+</td><td>+</td><td><b>+</b></td><td class="lf m">tg 45° = 1</td></tr>
+          <tr><td>II</td><td>+</td><td>−</td><td><b>−</b></td><td class="lf m">tg 135° = −1</td></tr>
+          <tr><td>III</td><td>−</td><td>−</td><td><b>+</b></td><td class="lf m">tg 225° = 1</td></tr>
+          <tr><td>IV</td><td>−</td><td>+</td><td><b>−</b></td><td class="lf m">tg 315° = −1</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="key">
+      <span>tg(180° − α) = −<span class="t">tg α</span></span>
+      <span>tg(α + 180°) = <span class="t">tg α</span></span>
+    </div>
+    <p>Для котангенса эти правила такие же.</p>
+    <div class="tasks" data-set="s4"></div>
+    <label class="done"><input type="checkbox" id="done-4" data-done="4"> Шаг пройден</label>
+  </div>
+</section>
+
+<section class="step" id="step-5">
+  <header>
+    <p class="eyebrow">Шаг 5 · около 10 минут</p>
+    <h2>Контрольная и тренажёр</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p><b>В конце задайте устно:</b> зачем нужен тангенс? Почему он бывает больше 1? Почему у тангенса нет значения при 90°?</p>
+    <p><b>Тренажёр</b> хорошо подходит для первых минут следующего занятия.</p>
+    <p>Ответы вводятся как <span class="m">0,5</span>, <span class="m">1/2</span>, <span class="m">√3/3</span> или <span class="m">корень3/3</span>.</p>
+  </aside>
+  <div class="main">
+    <div class="tasks" data-set="final"></div>
+    <h3 id="drill" style="scroll-margin-top:60px">Тренажёр значений</h3>
+    <div class="drill" id="drill-box"></div>
+    <label class="done"><input type="checkbox" id="done-5" data-done="5"> Шаг пройден</label>
+  </div>
+</section>
+
+<section class="step" id="cheat">
+  <header>
+    <p class="eyebrow">На память</p>
+    <h2>Шпаргалка и частые ошибки</h2>
+  </header>
+  <aside class="note">
+    <p class="who">Для вас</p>
+    <p>Эта страница дополняет шпаргалку прошлого урока. Можно переписать на один лист с ней.</p>
+  </aside>
+  <div class="main">
+    <div class="tscroll"><table class="vals" data-vals="0,30,45,60,90,120,135,150,180" data-rad="1"></table></div>
+    <div class="sheet">
+      <div>
+        <h3>Определения</h3>
+        <p><span class="t">tg α</span> = <span class="f"><b>противолежащий</b><b>прилежащий</b></span> = <span class="f"><b>sin α</b><b>cos α</b></span></p>
+        <p><span class="g">ctg α</span> = <span class="f"><b>прилежащий</b><b>противолежащий</b></span> = <span class="f"><b>cos α</b><b>sin α</b></span></p>
+      </div>
+      <div>
+        <h3>Связи</h3>
+        <p>tg α · ctg α = 1</p>
+        <p>ctg α = tg(90° − α)</p>
+        <p>1 + tg²α = <span class="f"><b>1</b><b>cos²α</b></span></p>
+        <p>1 + ctg²α = <span class="f"><b>1</b><b>sin²α</b></span></p>
+      </div>
+      <div>
+        <h3>Знаки и период</h3>
+        <p>I и III четверти: плюс</p>
+        <p>II и IV четверти: минус</p>
+        <p>Период 180°, то есть π</p>
+      </div>
+      <div>
+        <h3>Не существуют</h3>
+        <p>tg при 90°, 270° и т. д. (cos = 0)</p>
+        <p>ctg при 0°, 180°, 360° и т. д. (sin = 0)</p>
+      </div>
+    </div>
+    <h3>Частые ошибки</h3>
+    <ol class="plain">
+      <li><b>Переворачивают дробь.</b> В тангенсе наверху катет напротив угла, как в синусе.</li>
+      <li><b>Считают, что тангенс не больше 1.</b> Это верно для синуса и косинуса. Например, tg 60° ≈ 1,73.</li>
+      <li><b>Пишут tg 90° = 0.</b> Значения нет, потому что cos 90° = 0, а делить на ноль нельзя.</li>
+      <li><b>Берут период 360°.</b> У тангенса и котангенса он равен 180°.</li>
+      <li><b>Ошибаются со знаком в III четверти.</b> Там синус и косинус отрицательны, но их отношение положительно.</li>
+      <li><b>Считают уклон 100% вертикалью.</b> Это угол 45°.</li>
+    </ol>
+    <p class="foot">Вернуться к <a href="#start">началу</a> или к <a href="sinus-i-kosinus.html">уроку про синус и косинус</a>.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+/*PARSE-START*/
+function parseNum(str){
+  var s=String(str).trim().toLowerCase().replace(/\s+/g,'').replace(/,/g,'.').replace(/[−–—]/g,'-')
+    .replace(/корень(из)?|кор|sqrt/g,'√').replace(/пи|pi/g,'π').replace(/(км|см|м|градусов|градуса|градус|град|°)$/,'')
+    .replace(/[×·]/g,'*').replace(/:/g,'/').replace(/½/g,'(1/2)');
+  if(!s)return null;
+  var i=0;
+  function expr(){var v=term();while(s[i]==='+'||s[i]==='-'){var o=s[i++],t=term();v=o==='+'?v+t:v-t;}return v;}
+  function term(){var v=unary();for(;;){var c=s[i];
+    if(c==='*'){i++;v*=unary();}else if(c==='/'){i++;v/=unary();}
+    else if(c&&/[0-9.√π(]/.test(c)){v*=unary();}else return v;}}
+  function unary(){if(s[i]==='-'){i++;return -unary();}if(s[i]==='+'){i++;return unary();}return prim();}
+  function prim(){var c=s[i];
+    if(c==='√'){i++;return Math.sqrt(prim());}
+    if(c==='π'){i++;return Math.PI;}
+    if(c==='('){i++;var v=expr();if(s[i++]!==')')throw 0;return v;}
+    var m=s.slice(i).match(/^(\d+(\.\d*)?|\.\d+)/);if(!m)throw 0;i+=m[0].length;return +m[0];}
+  try{var v=expr();return (i===s.length&&isFinite(v))?v:null;}catch(e){return null;}
+}
+/*PARSE-END*/
+
+(function(){
+document.documentElement.lang='ru';
+var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var rad=function(d){return d*Math.PI/180};
+var fr=function(a,b){return '<span class="f"><b>'+a+'</b><b>'+b+'</b></span>'};
+var fmt=function(x,n){n=n===undefined?2:n;var s=x.toFixed(n);if(/^-0(\.0+)?$/.test(s))s=s.slice(1);return s.replace('.',',').replace('-','−')};
+var store={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+var norm=function(d){return ((d%360)+360)%360};
+function gcd(a,b){return b?gcd(b,a%b):a}
+function radLabel(deg){if(deg===0)return '0';var g=gcd(deg,180),n=deg/g,d=180/g,t=(n===1?'':n)+'π';return d===1?t:fr(t,d);}
+var pt=function(cx,cy,r,d){return [cx+r*Math.cos(rad(d)),cy-r*Math.sin(rad(d))]};
+function arc(cx,cy,r,d1,d2){if(d2-d1<=0.01)return '';if(d2-d1>=359.9){return 'M'+(cx+r)+' '+cy+'A'+r+' '+r+' 0 1 0 '+(cx-r)+' '+cy+'A'+r+' '+r+' 0 1 0 '+(cx+r)+' '+cy;}
+  var p=pt(cx,cy,r,d1),q=pt(cx,cy,r,d2);return 'M'+p[0]+' '+p[1]+'A'+r+' '+r+' 0 '+(d2-d1>180?1:0)+' 0 '+q[0]+' '+q[1];}
+function T(x,y,s,cls,anc){return '<text x="'+x+'" y="'+y+'" class="lb '+(cls||'tfg')+'"'+(anc?' text-anchor="'+anc+'"':'')+'>'+s+'</text>';}
+function L(x1,y1,x2,y2,col,w,extra){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width="'+(w||1)+'" '+(extra||'')+'/>';}
+/* Значения: null, если не существует */
+function tanOf(d){return norm(d)%180===90?null:Math.tan(rad(d))}
+function ctgOf(d){return norm(d)%180===0?null:1/Math.tan(rad(d))}
+var S33=fr('√3',3),BASE={0:'0',30:S33,45:'1',60:'√3'};
+function exactT(d,fn){d=norm(d);if(d%30&&d%45)return null;
+  if(fn==='tg'?d%180===90:d%180===0)return 'нет';
+  var h=d%180,neg=h>90,ref=neg?180-h:h,key=fn==='tg'?ref:90-ref;
+  return (neg&&key!==0?'−':'')+BASE[key];}
+
+/* ---- Вводный рисунок ---- */
+(function(){
+  var sv=$('#hero-svg'),a=35;
+  function draw(){var cx=75,cy=120,R=55,lx=cx+R,t=Math.tan(rad(a)),y=cy-R*t,p=pt(cx,cy,R,a),c=Math.cos(rad(a)),s=Math.sin(rad(a));
+    sv.innerHTML=L(5,cy,195,cy,'var(--line)')+L(cx,5,cx,195,'var(--line)')
+      +'<circle cx="75" cy="120" r="55" fill="none" stroke="var(--fg)" stroke-width="1.5"/>'
+      +L(lx,5,lx,195,'var(--muted)')
+      +L(cx-400*c,cy+400*s,cx+400*c,cy-400*s,'var(--muted)',1,'stroke-dasharray="4 4"')
+      +L(cx,cy,p[0],p[1],'var(--fg)',2)
+      +L(lx,cy,lx,Math.max(-20,Math.min(220,y)),'var(--tan)',4)
+      +'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5" fill="var(--accent)"/>';}
+  draw();
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  var last=0;function tick(t){if(last){a=(a+(t-last)*0.012)%360;draw();}last=t;requestAnimationFrame(tick);}
+  requestAnimationFrame(tick);
+})();
+
+/* ---- Шаг 2: треугольник ---- */
+(function(){
+  var ia=$('#t2-angle'),is=$('#t2-size'),sv=$('#t2-svg'),rd=$('#t2-read');
+  function draw(){var A=+ia.value,h=+is.value,U=25,ox=40,oy=270,op=h*Math.sin(rad(A)),ad=h*Math.cos(rad(A)),bx=ox+ad*U,cy=oy-op*U,tg=Math.tan(rad(A));
+    sv.innerHTML=L(ox,oy,bx,oy,'var(--cos)',4)+L(bx,oy,bx,cy,'var(--sin)',4)+L(ox,oy,bx,cy,'var(--fg)',2.5)
+      +'<path d="M'+(bx-12)+' '+oy+'V'+(oy-12)+'H'+bx+'" fill="none" stroke="var(--fg)"/>'
+      +'<path d="'+arc(ox,oy,26,0,A)+'" fill="none" stroke="var(--accent)" stroke-width="2"/>'
+      +T(ox+32,oy-8,'α','tacc')
+      +T(Math.max(ox+50,(ox+bx)/2),oy+20,'прилежащий','tcos','middle')
+      +T(bx+8,(oy+cy)/2+5,'противо-','tsin')+T(bx+8,(oy+cy)/2+22,'лежащий','tsin');
+    rd.innerHTML='<div class="ln"><span class="tag">катет напротив</span> <span class="s">'+fmt(op)+'</span></div>'
+      +'<div class="ln"><span class="tag">катет рядом</span> <span class="c">'+fmt(ad)+'</span></div>'
+      +'<div class="ln"><span class="t">tg '+A+'°</span> = '+fr(fmt(op),fmt(ad))+' = <b>'+fmt(tg,3)+'</b></div>'
+      +'<div class="ln"><span class="g">ctg '+A+'°</span> = '+fr(fmt(ad),fmt(op))+' = <b>'+fmt(1/tg,3)+'</b></div>'
+      +'<div class="ln"><span class="tag">уклон на знаке</span> <b>'+fmt(tg*100,0)+'%</b></div>'
+      +'<div class="ln"><span class="tag">на 1 м вперёд подъём</span> '+fmt(tg)+' м</div>';}
+  ia.addEventListener('input',draw);is.addEventListener('input',draw);draw();
+})();
+
+/* ---- Таблицы значений ---- */
+$$('[data-vals]').forEach(function(t){
+  var ds=t.getAttribute('data-vals').split(',').map(Number),h='<tbody><tr><th>α</th>'+ds.map(function(d){return '<th>'+d+'°</th>'}).join('')+'</tr>';
+  if(t.hasAttribute('data-rad'))h+='<tr><th>рад</th>'+ds.map(function(d){return '<td>'+radLabel(d)+'</td>'}).join('')+'</tr>';
+  h+='<tr><th class="t">tg α</th>'+ds.map(function(d){return '<td>'+exactT(d,'tg')+'</td>'}).join('')+'</tr>';
+  h+='<tr><th class="g">ctg α</th>'+ds.map(function(d){return '<td>'+exactT(d,'ctg')+'</td>'}).join('')+'</tr></tbody>';
+  t.innerHTML=h;
+});
+
+/* ---- Шаг 4: окружность и график ---- */
+var SNAP=[0,30,45,60,90,120,135,150,180,210,225,240,270,300,315,330,360];
+(function(){
+  var host=$('#c4'),C=200,R=100,LX=C+R,LY=C-R,deg=30,st='';
+  st+=L(20,C,380,C,'var(--muted)')+L(C,20,C,380,'var(--muted)');
+  st+='<circle cx="200" cy="200" r="100" fill="none" stroke="var(--fg)" stroke-width="1.5"/>';
+  st+=L(LX,10,LX,390,'var(--tan)',1.5,'opacity="0.55"')+L(10,LY,390,LY,'var(--ctg)',1.5,'opacity="0.55"');
+  st+=T(LX+6,62,'x = 1','ttan')+T(16,LY-6,'y = 1','tctg');
+  st+=T(LX+5,C+16,'1','tmut')+T(C+6,LY+16,'1','tmut');
+  SNAP.slice(0,16).forEach(function(d){var p=pt(C,C,R,d);st+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.5" fill="var(--muted)"/>';});
+  var qs=[[392,24,'end','I','tg +, ctg +'],[8,24,'start','II','tg −, ctg −'],[8,370,'start','III','tg +, ctg +'],[392,370,'end','IV','tg −, ctg −']];
+  qs.forEach(function(q,i){st+='<g data-q="'+(i+1)+'"><text x="'+q[0]+'" y="'+q[1]+'" text-anchor="'+q[2]+'" class="lb">'+q[3]+'</text><text x="'+q[0]+'" y="'+(q[1]+15)+'" text-anchor="'+q[2]+'" class="small">'+q[4]+'</text></g>';});
+  host.innerHTML='<div class="row"><div class="draw"><svg viewBox="0 0 400 400" role="img" aria-label="Единичная окружность с линиями тангенса и котангенса. Перетащите точку или используйте ползунок"><g>'+st+'</g><g class="dyn"></g><circle class="pv" r="8" fill="var(--accent)"/><circle class="handle" r="26"/></svg></div><div class="read"></div></div>'
+    +'<div class="ctrls"><label class="sl">Угол α <input type="range" id="c4-range" min="0" max="360" value="30"></label>'
+    +'<label><input type="checkbox" id="c4-snap" checked> Прилипать к углам из таблицы</label></div>'
+    +'<div class="quick" role="group" aria-label="Быстрый выбор угла">'+SNAP.map(function(d){return '<button type="button" class="btn ghost qk" data-d="'+d+'">'+d+'°</button>'}).join('')+'</div>'
+    +'<p class="figcap">Тащи точку, двигай ползунок или выбери угол кнопкой.</p>';
+  var svg=$('svg',host),dyn=$('.dyn',host),pv=$('.pv',host),hd=$('.handle',host),rd=$('.read',host),rng=$('#c4-range'),snap=$('#c4-snap');
+  /* график */
+  var g=$('#g4'),X0=30,W=436,Y=92,A=24,xOf=function(d){return X0+d*W/360},bg='';
+  function branch(fn){var s='',pen=false;for(var d=0;d<=360;d+=1){var v=fn(d);if(v===null||Math.abs(v)>3.2){pen=false;continue;}s+=(pen?'L':'M')+xOf(d).toFixed(1)+' '+(Y-A*v).toFixed(1);pen=true;}return s;}
+  [[90,'π/2'],[180,'π'],[270,'3π/2'],[360,'2π']].forEach(function(t){var x=xOf(t[0]);bg+=T(x,190,t[1],'tfg','middle')+'<text x="'+x+'" y="206" text-anchor="middle" class="small tmut">'+t[0]+'°</text>';});
+  [90,270].forEach(function(d){var x=xOf(d);bg+=L(x,Y-78,x,Y+78,'var(--tan)',1,'stroke-dasharray="4 4" opacity="0.6"');});
+  [0,180,360].forEach(function(d){var x=xOf(d);bg+=L(x,Y-78,x,Y+78,'var(--ctg)',1,'stroke-dasharray="4 4" opacity="0.6"');});
+  bg+=L(X0,Y,X0+W+6,Y,'var(--muted)');
+  bg+=T(X0-6,Y-A*3+5,'3','tmut','end')+T(X0-6,Y+A*3+5,'−3','tmut','end')+T(X0-6,Y+5,'0','tmut','end');
+  bg+='<path d="'+branch(ctgOf)+'" fill="none" stroke="var(--ctg)" stroke-width="2"/><path d="'+branch(tanOf)+'" fill="none" stroke="var(--tan)" stroke-width="2.5"/>';
+  g.innerHTML=bg+'<g class="dyn"></g>';
+  var gd=$('.dyn',g);
+  function set(d){deg=d;rng.value=d;render();}
+  function render(){var p=pt(C,C,R,deg),x=p[0],y=p[1],cs=Math.cos(rad(deg)),sn=Math.sin(rad(deg)),tv=tanOf(deg),cv=ctgOf(deg),h='';
+    h+=L(C-600*cs,C+600*sn,C+600*cs,C-600*sn,'var(--muted)',1,'stroke-dasharray="5 5"');
+    h+=L(C,C,x,y,'var(--fg)',2)+L(C,C,x,C,'var(--cos)',3)+L(x,C,x,y,'var(--sin)',3);
+    h+='<path d="'+arc(C,C,24,0,deg)+'" fill="none" stroke="var(--accent)" stroke-width="2"/>';
+    if(deg>8&&deg<352){var a=pt(C,C,38,deg/2);h+=T(a[0],a[1]+5,'α','tacc','middle');}
+    if(tv!==null){var ty=C-R*tv,tcl=Math.max(-40,Math.min(440,ty));h+=L(LX,C,LX,tcl,'var(--tan)',5);
+      if(ty>10&&ty<390)h+='<circle cx="'+LX+'" cy="'+ty+'" r="5" fill="var(--tan)"/>';
+      if(Math.abs(tv)>.18){var my=Math.max(44,Math.min(350,(C+tcl)/2+5));h+=T(LX+8,my,'tg α','ttan');}}
+    if(cv!==null){var gx=C+R*cv,gcl=Math.max(-40,Math.min(440,gx));h+=L(C,LY,gcl,LY,'var(--ctg)',5);
+      if(gx>10&&gx<390)h+='<circle cx="'+gx+'" cy="'+LY+'" r="5" fill="var(--ctg)"/>';
+      if(Math.abs(cv)>.3){var mx=Math.max(70,Math.min(330,(C+gcl)/2));h+=T(mx,LY-8,'ctg α','tctg','middle');}}
+    dyn.innerHTML=h;
+    pv.setAttribute('cx',x);pv.setAttribute('cy',y);hd.setAttribute('cx',x);hd.setAttribute('cy',y);
+    var dn=norm(deg),q=dn%90===0?0:Math.ceil(dn/90);
+    $$('[data-q]',svg).forEach(function(n){n.setAttribute('class',+n.getAttribute('data-q')===q?'tacc':'tmut');});
+    var et=exactT(deg,'tg'),ec=exactT(deg,'ctg');
+    var val=function(e,v){if(v===null)return '<b>не существует</b>';return (e?e+' ≈ ':'')+'<b>'+fmt(v)+'</b>';};
+    rd.innerHTML='<div class="ln">α = <b>'+deg+'°</b> = '+radLabel(deg)+' рад</div>'
+      +'<div class="ln"><span class="tag">sin α =</span> '+fmt(sn)+' <span class="tag">cos α =</span> '+fmt(cs)+'</div>'
+      +'<div class="ln"><span class="t">tg α</span> = '+val(et,tv)+'</div>'
+      +'<div class="ln"><span class="g">ctg α</span> = '+val(ec,cv)+'</div>'
+      +'<div class="ln"><span class="tag">'+(q?['','I','II','III','IV'][q]+' четверть':'точка на оси')+'</span></div>';
+    var gx2=xOf(deg),m=L(gx2,Y-78,gx2,Y+78,'var(--accent)',1.5);
+    if(tv!==null&&Math.abs(tv)<=3.2)m+='<circle cx="'+gx2+'" cy="'+(Y-A*tv)+'" r="5" fill="var(--tan)"/>';
+    if(cv!==null&&Math.abs(cv)<=3.2)m+='<circle cx="'+gx2+'" cy="'+(Y-A*cv)+'" r="5" fill="var(--ctg)"/>';
+    gd.innerHTML=m;}
+  rng.addEventListener('input',function(){set(+rng.value)});
+  $$('.qk',host).forEach(function(b){b.addEventListener('click',function(){set(+b.getAttribute('data-d'))});});
+  var drag=false;
+  hd.addEventListener('pointerdown',function(e){drag=true;try{hd.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault();});
+  hd.addEventListener('pointermove',function(e){if(!drag)return;var b=svg.getBoundingClientRect(),mx=(e.clientX-b.left)*400/b.width-C,my=C-(e.clientY-b.top)*400/b.height;
+    var d=Math.round(norm(Math.atan2(my,mx)*180/Math.PI));
+    if(snap.checked){var best=null;SNAP.forEach(function(t){if(Math.abs(t-d)<=5&&(best===null||Math.abs(t-d)<Math.abs(best-d)))best=t;});if(best!==null)d=best;}
+    set(d);});
+  ['pointerup','pointercancel'].forEach(function(n){hd.addEventListener(n,function(){drag=false})});
+  render();
+})();
+
+/* ---- Задачи ---- */
+var TASKS={
+ s2:[
+  {q:'В треугольнике ABC угол C прямой, BC = 3, AC = 4. Найди <span class="t">tg A</span>.',a:'3/4',h:'Напротив угла A лежит BC, рядом с ним AC.',s:'tg A = '+fr('BC','AC')+' = '+fr(3,4)+' = 0,75.'},
+  {q:'В том же треугольнике найди <span class="g">ctg A</span>.',a:'4/3',h:'Переверни дробь из прошлой задачи.',s:'ctg A = '+fr('AC','BC')+' = '+fr(4,3)+'.'},
+  {q:'В том же треугольнике найди <span class="t">tg B</span>. С чем он совпал?',a:'4/3',h:'Смотрим от вершины B. Какой катет теперь напротив?',s:'tg B = '+fr('AC','BC')+' = '+fr(4,3)+'. Это равно ctg A, потому что A + B = 90°.'},
+  {q:'От дерева отошли на 15 м, вершина видна под углом 45°. Какова высота дерева в метрах?',a:'15',h:'tg 45° = 1.',s:'h = 15 · tg 45° = 15 м.'},
+  {q:'Уклон дороги 12%. На сколько метров поднимается дорога на каждые 100 м по горизонтали?',a:'12',h:'tg α = 0,12.',s:'100 · 0,12 = 12 м.'}],
+ s3:[
+  {q:'sin α = 0,6, cos α = 0,8. Найди <span class="t">tg α</span>.',a:'3/4',h:'tg α = sin α / cos α.',s:fr('0,6','0,8')+' = '+fr(3,4)+' = 0,75.'},
+  {q:'tg α = 3. Найди <span class="g">ctg α</span>.',a:'1/3',h:'tg α · ctg α = 1.',s:'ctg α = '+fr(1,3)+'.'},
+  {q:'Найди <span class="g">ctg 60°</span>.',a:'√3/3',h:'ctg 60° = cos 60° / sin 60°.',s:fr('1/2','√3/2')+' = '+fr(1,'√3')+' = '+S33+'.'},
+  {q:'tg α = '+fr(3,4)+', угол α острый. Найди <span class="c">cos α</span>.',a:'4/5',h:'1 + tg²α = 1 / cos²α.',s:fr(1,'cos²α')+' = 1 + '+fr(9,16)+' = '+fr(25,16)+', значит cos²α = '+fr(16,25)+'. Угол острый, поэтому cos α = '+fr(4,5)+'.'}],
+ s4:[
+  {q:'Найди <span class="t">tg 135°</span>.',a:'-1',h:'Острый угол 45°, II четверть.',s:'tg 45° = 1, во II четверти знак минус: −1.'},
+  {q:'Найди <span class="g">ctg 150°</span>.',a:'-√3',h:'Острый угол 30°, II четверть.',s:'ctg 30° = √3, во II четверти знак минус: −√3.'},
+  {q:'Найди <span class="t">tg 210°</span>.',a:'√3/3',h:'III четверть: минус делить на минус.',s:'Острый угол 30°, tg 30° = '+S33+'. В III четверти знак плюс: '+S33+'.'},
+  {q:'Найди <span class="g">ctg 300°</span>.',a:'-√3/3',h:'Острый угол 60°, IV четверть.',s:'ctg 60° = '+S33+', в IV четверти знак минус: −'+S33+'.'},
+  {q:'Чему равен <span class="t">tg 90°</span>?',o:['0','1','не существует'],c:2,s:'cos 90° = 0, а делить на ноль нельзя. На рисунке луч параллелен линии x = 1.'},
+  {q:'Какой период у <span class="t">тангенса</span>?',o:['90°','180°','360°'],c:1,s:'Лучи α и α + 180° лежат на одной прямой, поэтому tg(α + 180°) = tg α.'}],
+ final:[
+  {q:'<b>1.</b> Катеты прямоугольного треугольника равны 5 и 12. Найди тангенс угла, лежащего напротив катета 5.',a:'5/12',h:'Шаг 2',s:'tg α = '+fr(5,12)+'.'},
+  {q:'<b>2.</b> sin α = '+fr(5,13)+', cos α = '+fr(12,13)+'. Найди ctg α.',a:'12/5',h:'Шаг 3',s:'ctg α = '+fr('cos α','sin α')+' = '+fr(12,5)+' = 2,4.'},
+  {q:'<b>3.</b> Вычисли tg 37° · ctg 37°.',a:'1',h:'Шаг 3',s:'Для любого угла, где оба значения существуют, это произведение равно 1.'},
+  {q:'<b>4.</b> Найди tg 150°.',a:'-√3/3',h:'Шаг 4',s:'Острый угол 30°, II четверть: −'+S33+'.'},
+  {q:'<b>5.</b> Найди ctg 225°.',a:'1',h:'Шаг 4',s:'Острый угол 45°, III четверть, знак плюс: 1.'},
+  {q:'<b>6.</b> cos α = −0,6, угол α тупой. Найди tg α.',a:'-4/3',h:'Сначала найди sin α из основного тождества.',s:'sin²α = 1 − 0,36 = 0,64, тупой угол даёт sin α = 0,8. tg α = '+fr('0,8','−0,6')+' = −'+fr(4,3)+'.'},
+  {q:'<b>7.</b> Тень от флагштока равна 8 м, солнце стоит под углом 60° к земле. Какова высота флагштока? Можно записать через корень.',a:'8√3',h:'Высота напротив угла, тень рядом с ним.',s:'h = 8 · tg 60° = 8√3 ≈ 13,86 м.'},
+  {q:'<b>8.</b> Найди tg '+fr('π',3)+'.',a:'√3',h:fr('π',3)+' = 60°.',s:'tg 60° = √3.'}]
+};
+$$('.tasks[data-set]').forEach(function(box){
+  var set=box.getAttribute('data-set'),list=TASKS[set],hd=document.createElement('p');
+  hd.className='tasks-h';hd.textContent=set==='final'?'Контрольная':'Проверь себя';box.appendChild(hd);
+  list.forEach(function(t,n){
+    var el=document.createElement('div'),id='task-'+set+'-'+n,sol='<details><summary>Решение</summary><div>'+t.s+'</div></details>',
+      hint=t.h?'<details><summary>Подсказка</summary><div>'+t.h+'</div></details>':'';
+    el.className='task';
+    if(t.o){
+      el.innerHTML='<p class="q">'+t.q+'</p><div class="opts">'+t.o.map(function(o,i){return '<button type="button" class="btn ghost opt" data-i="'+i+'">'+o+'</button>'}).join('')+'</div><p class="fb" role="status"></p><div class="dets">'+sol+'</div>';
+      $$('.opt',el).forEach(function(b){b.addEventListener('click',function(){var i=+b.getAttribute('data-i'),fb=$('.fb',el);
+        if(i===t.c){b.classList.add('right');fb.className='fb ok';fb.textContent='Верно.';}
+        else{b.classList.add('wrong');fb.className='fb no';fb.textContent='Пока нет. Подумай ещё.';}});});
+    }else{
+      el.innerHTML='<p class="q">'+t.q+'</p><form class="ans" autocomplete="off"><input id="'+id+'" type="text" aria-label="Твой ответ" placeholder="ответ"><button type="button" class="btn ghost ins" data-ins="√" aria-label="Вставить корень">√</button><button class="btn" type="submit">Проверить</button></form><p class="fb" role="status"></p><div class="dets">'+hint+sol+'</div>';
+      var inp=$('input',el),fb=$('.fb',el);
+      $$('.ins',el).forEach(function(b){b.addEventListener('click',function(){inp.value+=b.getAttribute('data-ins');inp.focus();});});
+      $('form',el).addEventListener('submit',function(e){e.preventDefault();
+        var v=parseNum(inp.value),a=parseNum(t.a),tol=Math.max(.008,.006*Math.abs(a));
+        if(v===null){fb.className='fb no';fb.textContent='Не получилось прочитать ответ. Запиши, например, так: 0,5 или 1/2 или √3/3.';return;}
+        if(Math.abs(v-a)<=tol){fb.className='fb ok';fb.textContent='Верно.';}
+        else if(a!==0&&Math.abs(v+a)<=tol){fb.className='fb no';fb.textContent='Число верное, а знак нет. В какой четверти точка?';}
+        else{fb.className='fb no';fb.textContent='Пока нет. Попробуй подсказку.';}
+      });
+    }
+    box.appendChild(el);
+  });
+});
+
+/* ---- Тренажёр ---- */
+(function(){
+  var box=$('#drill-box'),ANG=[0,30,45,60,90,120,135,150,180,210,225,240,270,300,315,330],lim=180,ok=0,total=0,streak=0,cur=null;
+  var ALL=['−√3','−1','−'+S33,'0',S33,'1','√3','нет'];
+  box.innerHTML='<div class="ctrls" role="group" aria-label="Диапазон углов"><span class="figcap">Углы:</span>'
+    +[[90,'0–90°'],[180,'0–180°'],[360,'0–360°']].map(function(r){return '<button type="button" class="btn ghost rng" data-lim="'+r[0]+'">'+r[1]+'</button>'}).join('')
+    +'<span class="figcap" id="drill-score" aria-live="polite"></span></div><div class="ask m"></div><div class="opts"></div><div class="res"></div>';
+  var ask=$('.ask',box),opts=$('.opts',box),res=$('.res',box),sc=$('#drill-score');
+  function mini(d){var C=46,R=38,p=pt(C,C,R,d);return '<svg viewBox="0 0 92 92" aria-hidden="true">'+L(4,C,88,C,'var(--muted)')+L(C,4,C,88,'var(--muted)')+'<circle cx="46" cy="46" r="38" fill="none" stroke="var(--fg)"/>'+L(C,C,p[0],C,'var(--cos)',3)+L(p[0],C,p[0],p[1],'var(--sin)',3)+'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="var(--accent)"/></svg>';}
+  function score(){sc.textContent=total?('верно '+ok+' из '+total+(streak>2?', подряд '+streak:'')):'';}
+  function next(){
+    var pool=ANG.filter(function(a){return a<=lim}),d;
+    do{d=pool[Math.floor(Math.random()*pool.length)];}while(cur&&d===cur.d&&pool.length>1);
+    var fn=Math.random()<.5?'tg':'ctg',ans=exactT(d,fn);cur={d:d,fn:fn};
+    ask.innerHTML='<span class="'+(fn==='tg'?'t':'g')+'">'+fn+' '+d+'°</span> = ?';
+    var list=lim>90?ALL:ALL.slice(3);
+    opts.innerHTML=list.map(function(v,i){return '<button type="button" class="btn ghost opt" data-i="'+i+'">'+v+'</button>'}).join('');
+    res.innerHTML='';
+    var done=false;
+    $$('.opt',opts).forEach(function(b){b.addEventListener('click',function(){if(done)return;done=true;
+      var v=list[+b.getAttribute('data-i')],right=v===ans;total++;
+      if(right){ok++;streak++;b.classList.add('right');}else{streak=0;b.classList.add('wrong');
+        $$('.opt',opts).forEach(function(x){if(list[+x.getAttribute('data-i')]===ans)x.classList.add('right');});}
+      score();
+      var q=d%90===0?0:Math.ceil(d/90),txt,ref=d<=90?d:d<=180?180-d:d<=270?d-180:360-d;
+      if(!q){txt=ans==='нет'?(fn==='tg'?'Здесь cos = 0':'Здесь sin = 0')+', а на ноль делить нельзя.':'Точка на оси, числитель дроби равен нулю.';}
+      else if(d<90)txt='Угол острый: значение берём прямо из таблицы.';
+      else txt='Острый угол '+ref+'°, значит модуль как у '+fn+' '+ref+'°. Четверть '+['','I','II','III','IV'][q]+' определяет знак.';
+      res.innerHTML=mini(d)+'<p>'+(right?'<b style="color:var(--ok)">Верно.</b> ':'<b style="color:var(--bad)">Правильно: '+ans+'.</b> ')+txt+'</p><button type="button" class="btn" id="drill-next">Дальше</button>';
+      var nb=$('#drill-next');nb.addEventListener('click',next);nb.focus({preventScroll:true});
+    });});
+  }
+  function mark(){$$('.rng',box).forEach(function(b){var a=+b.getAttribute('data-lim')===lim;b.classList.toggle('ghost',!a);b.setAttribute('aria-pressed',a);});}
+  $$('.rng',box).forEach(function(b){b.addEventListener('click',function(){lim=+b.getAttribute('data-lim');ok=total=streak=0;cur=null;score();mark();next();});});
+  mark();next();
+})();
+
+/* ---- Заметки и прогресс ---- */
+(function(){
+  var nt=$('#notes-on');
+  function ap(){document.body.classList.toggle('no-notes',!nt.checked)}
+  if(store.get('tgctg-notes')==='0')nt.checked=false;
+  ap();nt.addEventListener('change',function(){store.set('tgctg-notes',nt.checked?'1':'0');ap();});
+  var done={};try{done=JSON.parse(store.get('tgctg-done')||'{}')||{}}catch(e){}
+  $$('[data-done]').forEach(function(c){var n=c.getAttribute('data-done'),a=$('[data-nav="'+n+'"]');
+    c.checked=!!done[n];a.classList.toggle('isdone',c.checked);
+    c.addEventListener('change',function(){done[n]=c.checked;store.set('tgctg-done',JSON.stringify(done));a.classList.toggle('isdone',c.checked);});});
+})();
+})();
+</script>
+
+</html>

@@ -1,0 +1,19 @@
+# Личные настройки и секреты
+.env
+.env.*
+!.env.example
+.aws/
+.codex/
+.agents/
+
+# Временные проверки и локальные профили браузеров
+.qa-*
+.browser-*/
+.chrome-*/
+.edge-*/
+.artifacts/
+__pycache__/
+*.pyc
+*.log
+Thumbs.db
+.DS_Store
